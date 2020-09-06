@@ -20,13 +20,14 @@
   shell: >-
     set -o pipefail
     && "{{ adguardhome_bin_file }}" -c /dev/null --check-config 2>&1
-    | grep -m 1 -E 'v[0-9.]+' -o
+    | grep -m 1 -oE 'version ([0-9.]+)' | cut -d" " -f2| cut -d" " -f2
+
   args:
     executable: /bin/bash
   register: adguardhome_version_check
   check_mode: no
   changed_when: >-
-    adguardhome_version_check.stdout.find('v' + adguardhome_version) == -1
+    adguardhome_version_check.stdout.find(adguardhome_version) == -1
   failed_when: >-
     adguardhome_version_check.rc != 0 and
     adguardhome_version_check.rc != 1 and
@@ -66,7 +67,12 @@
   when: >-
     adguardhome_user == "root"
 
-- name: Install systemd servicee
+- name: Install Docker-cert.sh script for obtaining Let's Encrypt certificates
+  vars:
+    ansible_become: true
+  include_tasks: obtain_acme_certificate.yml
+
+- name: Install systemd service
   include_tasks: systemd_service.yml
   when: >-
     ansible_service_mgr == "systemd" and adguardhome_service_enable

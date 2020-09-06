@@ -34,3 +34,52 @@ adguardhome_service_start: true
 
 # Disable DNSStubResolver if systemd-resolved servicee is running.
 adguardhome_disable_systemd_dnsstubresolver: true
+
+# TLS Cert. Docker repo
+adguardhome_docker_repo: kitos9112/certbot-aarch64-dns-cloudflare
+adguardhome_certbot_dir: /opt/certbot
+#Default variable for AdGuard Settings
+
+adguardhome_bind_host: 0.0.0.0
+adguardhome_bind_port: 80
+
+adguardhome_home_users:
+  adguard: $2a$10$PZhepIQQGSrc86ga/lXD3OROEEHyBCUlSu4tfbWPMpsaIHtPIecMK
+
+adguardhome_web_session_ttl: 1200
+adguardhome_dns_bind_host: 0.0.0.0
+adguardhome_dns_blocked_response_ttl: 30
+adguardhome_dns_upstream_dns:
+  - tls://1.1.1.1:853
+  - tls://1.0.0.1:853
+  - https://dns.quad9.net/dns-query
+  - https://mozilla.cloudflare-dns.com/dns-query
+adguardhome_dns_bootstrap_dns:
+  - 9.9.9.10
+  - 149.112.112.10
+  - 2620:fe::10
+  - 2620:fe::fe:10
+adguardhome_dns_filtering_enabled: true
+adguardhome_dns_filters_update_interval: 4
+adguardhome_dns_filters:
+  - enabled: true
+    url: https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
+    name: AdGuard DNS filter
+    id: 1
+  - enabled: true
+    url: https://github.com/AdAway/adaway.github.io/blob/master/hosts.txt
+    name: AdAway
+    id: 2
+  - enabled: true
+    url: https://www.malwaredomainlist.com/hostslist/hosts.txt
+    name: MalwareDomainList.com Hosts List
+    id: 3
+  - enabled: true
+    url: https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
+    name: DisconnectMe
+    id: 4
+
+adguardhome_dns_enable_dnssec: true
+adguardhome_tls_hostname: "pi-1050.uk.msrpi.com"
+adguardhome_tls_cert_pem: "{{adguardhome_config_dir}}/fullchain.pem"
+adguardhome_tls_key_pem: "{{adguardhome_config_dir}}/privkey.pem"

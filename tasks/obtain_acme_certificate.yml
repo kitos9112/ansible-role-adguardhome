@@ -1,0 +1,38 @@
+---
+- name: "Ensure {{ adguardhome_certbot_dir }} directory exists"
+  file:
+    path: "{{ adguardhome_certbot_dir }}/etc"
+    state: directory
+
+- name: Copy cf.ini into etc folder
+  template:
+    src: cf.ini.j2
+    dest: "{{ adguardhome_certbot_dir }}/etc/cf.ini"
+    mode: 0700
+    owner: root
+    group: root
+
+- name: Create `docker-cert-adguard.sh` SH script for obtaining and installing certs
+  template:
+    src: docker-cert.sh.j2
+    dest: "{{ adguardhome_certbot_dir }}/docker-cert-adguard.sh"
+    mode: 0700
+    owner: root
+    group: root
+
+- name: Execute previously-copied SH script
+  shell:
+    chdir: "{{ adguardhome_certbot_dir }}"
+    cmd: ./docker-cert-adguard.sh certonly
+  register: adguardhome_cert_check
+  check_mode: no
+  changed_when: >-
+    adguardhome_cert_check.stdout.find('Certificate not yet due for renewal; no action taken') == -1
+
+- name: Create a cronjob to automatically renew the cert
+  cron:
+    name: ACME Let's Encrypt @AdGuardHome
+    special_time: daily
+    user: root
+    job: "cd {{ adguardhome_certbot_dir }}; ./docker-cert-adguard.sh certonly"
+    cron_file: ansible_docker-cert-adguard
