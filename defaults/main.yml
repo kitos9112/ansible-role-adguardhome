@@ -40,13 +40,15 @@ adguardhome_docker_repo: kitos9112/certbot-aarch64-dns-cloudflare
 adguardhome_certbot_dir: /opt/certbot
 #Default variable for AdGuard Settings
 
-adguardhome_bind_host: 0.0.0.0
-adguardhome_bind_port: 80
+adguardhome_bind_host: 127.0.0.1
+adguardhome_bind_http_port: 1880
+adguardhome_bind_https_port: 1443
 
 adguardhome_home_users:
   adguard: $2a$10$PZhepIQQGSrc86ga/lXD3OROEEHyBCUlSu4tfbWPMpsaIHtPIecMK
 
 adguardhome_web_session_ttl: 1200
+adguardhome_dns_rewrites: []
 adguardhome_dns_bind_host: 0.0.0.0
 adguardhome_dns_blocked_response_ttl: 30
 adguardhome_dns_upstream_dns:
@@ -59,6 +61,10 @@ adguardhome_dns_bootstrap_dns:
   - 149.112.112.10
   - 2620:fe::10
   - 2620:fe::fe:10
+
+adguardhome_safesearch_enabled: true
+adguardhome_safebrowsing_enabled: true
+
 adguardhome_dns_filtering_enabled: true
 adguardhome_dns_filters_update_interval: 4
 adguardhome_dns_filters:
@@ -80,6 +86,16 @@ adguardhome_dns_filters:
     id: 4
 
 adguardhome_dns_enable_dnssec: true
+
+adguardhome_dhcp_enabled: false
+adguardhome_dhcp_interface_name: eth0
+adguardhome_dhcp_gateway_ip: 10.10.30.1
+adguardhome_dhcp_subnet_mask: 255.255.255.0
+adguardhome_dhcp_range_start: 10.10.30.100
+adguardhome_dhcp_range_end: 10.10.30.200
+adguardhome_dhcp_lease_duration: 86400
+adguardhome_dhcp_icmp_timeout_msec: 1000
+
 adguardhome_tls_hostname: "pi-1050.uk.msrpi.com"
 adguardhome_tls_cert_pem: "{{adguardhome_config_dir}}/fullchain.pem"
 adguardhome_tls_key_pem: "{{adguardhome_config_dir}}/privkey.pem"

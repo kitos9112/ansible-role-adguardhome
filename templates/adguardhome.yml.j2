@@ -1,5 +1,5 @@
 bind_host: {{ adguardhome_bind_host }}
-bind_port: {{ adguardhome_bind_port }}
+bind_port: {{ adguardhome_bind_http_port }}
 users:
 {% for username, password in adguardhome_home_users.items() %}
 - name: {{ username }} 
@@ -52,19 +52,27 @@ dns:
   filtering_enabled: {{ adguardhome_dns_filtering_enabled }}
   filters_update_interval: {{ adguardhome_dns_filters_update_interval }}
   parental_enabled: false
-  safesearch_enabled: false
-  safebrowsing_enabled: false
+  safesearch_enabled: {{ adguardhome_safesearch_enabled }}
+  safebrowsing_enabled: {{ adguardhome_safebrowsing_enabled }}
   safebrowsing_cache_size: 1048576
   safesearch_cache_size: 1048576
   parental_cache_size: 1048576
   cache_time: 30
+{% if adguardhome_dns_rewrites | length > 0 %}
+  rewrites:
+{% for rewrite in adguardhome_dns_rewrites %}
+  - domain: {{ rewrite.domain }}
+    answer: {{ rewrite.answer }}
+{% endfor %}
+{% else %}
   rewrites: []
+{% endif %}
   blocked_services: []
 tls:
   enabled: true
   server_name: "{{ adguardhome_tls_hostname }}"
   force_https: true
-  port_https: 443
+  port_https: {{ adguardhome_bind_https_port }}
   port_dns_over_tls: 853
   allow_unencrypted_doh: false
   strict_sni_check: false
@@ -84,15 +92,20 @@ filters:
 {% endfor %}
 whitelist_filters: []
 user_rules: []
+{% if adguardhome_dhcp_enabled | bool %}
+dhcp:
+  enabled: true
+  interface_name: {{ adguardhome_dhcp_interface_name }}
+  gateway_ip: {{ adguardhome_dhcp_gateway_ip }}
+  subnet_mask: {{ adguardhome_dhcp_subnet_mask }}
+  range_start: {{ adguardhome_dhcp_range_start }}
+  range_end: {{ adguardhome_dhcp_range_end }}
+  lease_duration: {{ adguardhome_dhcp_lease_duration }}
+  icmp_timeout_msec: {{ adguardhome_dhcp_icmp_timeout_msec }}
+{% else %}
 dhcp:
   enabled: false
-  interface_name: ""
-  gateway_ip: ""
-  subnet_mask: ""
-  range_start: ""
-  range_end: ""
-  lease_duration: 86400
-  icmp_timeout_msec: 1000
+{% endif %}
 clients: []
 log_compress: true
 log_localtime: true
