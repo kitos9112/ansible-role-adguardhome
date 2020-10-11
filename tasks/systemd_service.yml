@@ -12,11 +12,6 @@
     - reload systemd daemon
     - restart adguardhome
 
-- name: Stop adguardhome prior modifying the config. file
-  service:
-    name: "{{ adguardhome_service_name }}"
-    state: stopped
-
 - name: Apply configuration settings
   template:
     src: adguardhome.yml.j2
@@ -24,13 +19,7 @@
     mode: 0644
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_user }}"
-
-- name: Start adguardhome after modifying the config. file
-  service:
-    name: "{{ adguardhome_service_name }}"
-    state: started
-
-- name: Ensure service is enabled
-  service:
-    name: "{{ adguardhome_service_name }}"
-    enabled: yes
+  notify:
+    - stop adguardhome service
+    - apply adguardhome configuration settings
+    - start && enable adguardhome service
