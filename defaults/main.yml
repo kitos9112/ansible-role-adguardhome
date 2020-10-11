@@ -54,6 +54,8 @@ adguardhome_dns_blocked_response_ttl: 30
 adguardhome_dns_upstream_dns:
   - tls://1.1.1.1:853
   - tls://1.0.0.1:853
+  - tls://dns.adguard.com:853
+  - https://dns.adguard.com/dns-query
   - https://dns.quad9.net/dns-query
   - https://mozilla.cloudflare-dns.com/dns-query
 adguardhome_dns_bootstrap_dns:
@@ -73,20 +75,17 @@ adguardhome_dns_filters:
     name: AdGuard DNS filter
     id: 1
   - enabled: true
-    url: https://github.com/AdAway/adaway.github.io/blob/master/hosts.txt
-    name: AdAway
-    id: 2
-  - enabled: true
     url: https://www.malwaredomainlist.com/hostslist/hosts.txt
     name: MalwareDomainList.com Hosts List
-    id: 3
+    id: 2
   - enabled: true
     url: https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
     name: DisconnectMe
-    id: 4
+    id: 3
 
 adguardhome_dns_enable_dnssec: true
-
+adguardhome_user_roles:
+  - ""
 adguardhome_dhcp_enabled: false
 adguardhome_dhcp_interface_name: eth0
 adguardhome_dhcp_gateway_ip: 10.10.30.1

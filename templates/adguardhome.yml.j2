@@ -37,12 +37,12 @@ dns:
 {% for dns_server in adguardhome_dns_bootstrap_dns %}
   - {{ dns_server }}
 {% endfor %}
-  all_servers: false
+  all_servers: true
   fastest_addr: false
   allowed_clients: []
   disallowed_clients: []
   blocked_hosts: []
-  cache_size: 4194304
+  cache_size: 41943040
   cache_ttl_min: 0
   cache_ttl_max: 0
   bogus_nxdomain: []
@@ -91,7 +91,10 @@ filters:
 {% endfor %}
 {% endfor %}
 whitelist_filters: []
-user_rules: []
+user_rules:
+{% for user_rule in adguardhome_user_roles %}
+  - {{ user_rule }}
+{% endfor %}
 {% if adguardhome_dhcp_enabled | bool %}
 dhcp:
   enabled: true
@@ -112,6 +115,6 @@ log_localtime: true
 log_max_backups: 0
 log_max_size: 100
 log_max_age: 3
-log_file: syslog 
+log_file: syslog
 verbose: false
 schema_version: 6

@@ -16,6 +16,11 @@
   include_tasks: latest_version.yml
   when: adguardhome_version == 'latest'
 
+- name: Configure resolvconf.conf
+  template:
+    src: resolvconf.conf.j2
+    dest: /etc/resolvconf.conf
+
 - name: Check version of installed binary
   shell: >-
     set -o pipefail
@@ -76,3 +81,11 @@
   include_tasks: systemd_service.yml
   when: >-
     ansible_service_mgr == "systemd" and adguardhome_service_enable
+
+- name: Disable systemd-resolved's DNSStubResolver
+  include_tasks: disable_dnsstubresolver.yml
+  when: >-
+    adguardhome_disable_systemd_dnsstubresolver and
+    ansible_facts.services
+    .get("systemd-resolved.service", {})
+    .get("state") == "running"
