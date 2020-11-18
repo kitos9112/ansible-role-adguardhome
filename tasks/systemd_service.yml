@@ -45,3 +45,11 @@
     enabled: yes
   when:
     - settings.changed |bool
+
+- name: Get info about running services
+  service_facts:
+
+- name: Assert adguardhome service is running
+  fail:
+    msg: "Seems like AdGuardHome service could not be started. Human intervention required"
+  when: ansible_facts.services.get("adguardhome.service", {}).get("state") != "running"

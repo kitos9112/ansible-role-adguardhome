@@ -84,16 +84,18 @@ adguardhome_dns_filters:
     id: 3
 
 adguardhome_dns_enable_dnssec: true
+adguardhome_dns_protection_enabled: true
 adguardhome_user_roles:
   - ""
-adguardhome_dhcp_enabled: false
-adguardhome_dhcp_interface_name: eth0
-adguardhome_dhcp_gateway_ip: 10.10.30.1
-adguardhome_dhcp_subnet_mask: 255.255.255.0
-adguardhome_dhcp_range_start: 10.10.30.100
-adguardhome_dhcp_range_end: 10.10.30.200
-adguardhome_dhcp_lease_duration: 86400
-adguardhome_dhcp_icmp_timeout_msec: 1000
+adguardhome_dhcpv4_enabled: false
+adguardhome_dhcpv4_interface_name: eth0
+adguardhome_dhcpv4_gateway_ip: 10.10.30.1
+adguardhome_dhcpv4_subnet_mask: 255.255.255.0
+adguardhome_dhcpv4_range_start: 10.10.30.100
+adguardhome_dhcpv4_range_end: 10.10.30.200
+adguardhome_dhcpv4_lease_duration: 86400
+adguardhome_dhcpv4_icmp_timeout_msec: 1000
+adguardhome_dhcpv4_options: []
 
 adguardhome_tls_hostname: "pi-1050.uk.msrpi.com"
 adguardhome_tls_cert_pem: "{{adguardhome_config_dir}}/fullchain.pem"
