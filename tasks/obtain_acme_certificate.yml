@@ -34,5 +34,5 @@
     name: ACME Let's Encrypt @AdGuardHome
     special_time: daily
     user: root
-    job: "cd {{ adguardhome_certbot_dir }} && ./docker-cert-adguard.sh certonly"
+    job: "{{ adguardhome_certbot_dir }}/docker-cert-adguard.sh certonly >> /var/log/cronjob-ansible_docker-cert-adguard.log 2>&1"
     cron_file: ansible_docker-cert-adguard

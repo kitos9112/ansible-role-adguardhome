@@ -46,6 +46,7 @@ adguardhome_bind_https_port: 1443
 
 adguardhome_home_users:
   adguard: $2a$10$PZhepIQQGSrc86ga/lXD3OROEEHyBCUlSu4tfbWPMpsaIHtPIecMK
+  home-automation: $2y$18$kb62IFLDl91EdojntkrBv.vVu3jli7xTWRn2g3nOb.GG3LP/4Qqh6
 
 adguardhome_web_session_ttl: 1200
 adguardhome_dns_rewrites: []

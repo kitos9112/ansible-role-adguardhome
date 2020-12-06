@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+cd {{ adguardhome_certbot_dir }}
+set -e
+
 # Setup the `environment`
 ETC=$(pwd)/etc
 LIB=$(pwd)/lib
@@ -17,7 +20,7 @@ case $1 in
   (*) printf >&2 'Usage: $0 <command> <certonly||renew>\n'; exit 1;;
 esac
 
-docker run -it --rm --name certbot \
+docker run --rm --name certbot \
    -v "$ETC:/etc/letsencrypt:rw" \
    -v "$LIB:/var/lib/letsencrypt:rw" \
    -v "$LOG:/var/log/letsencrypt:rw" \
