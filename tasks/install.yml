@@ -20,7 +20,7 @@
       - "--strip-components=1"
 
 - name: "Copy binary to {{ adguardhome_bin_dir }}/"
-  copy:
+  ansible.builtin.copy:
     src: "{{ adguardhome_unpack_dir }}/{{ adguardhome_bin_name }}"
     dest: "{{ adguardhome_bin_file }}"
     mode: "0755"
