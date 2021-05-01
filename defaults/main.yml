@@ -51,7 +51,7 @@ adguardhome_home_users:
 adguardhome_web_session_ttl: 1200
 adguardhome_dns_rewrites: []
 adguardhome_dns_bind_host: 0.0.0.0
-adguardhome_dns_blocked_response_ttl: 30
+adguardhome_dns_blocked_response_ttl: 1800
 adguardhome_dns_upstream_dns:
   - tls://1.1.1.1:853
   - tls://1.0.0.1:853
@@ -67,6 +67,7 @@ adguardhome_dns_bootstrap_dns:
 
 adguardhome_safesearch_enabled: true
 adguardhome_safebrowsing_enabled: true
+adguardhome_dns_parental_enabled: false
 
 adguardhome_dns_filtering_enabled: true
 adguardhome_dns_filters_update_interval: 4

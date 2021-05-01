@@ -13,22 +13,30 @@ web_session_ttl: {{ adguardhome_web_session_ttl }}
 dns:
   bind_host: {{ adguardhome_dns_bind_host }}
   port: 53
-  statistics_interval: 1
+  statistics_interval: 30
+  # Query log settings
   querylog_enabled: true
   querylog_file_enabled: true
-  querylog_interval: 90
-  querylog_size_memory: 1000
+  querylog_interval: 30
+  querylog_size_memory: 100
   anonymize_client_ip: false
+  # Protection settings
   protection_enabled: {{ adguardhome_dns_protection_enabled }}
+  filtering_enabled: {{ adguardhome_dns_filtering_enabled }}
   blocking_mode: default
   blocking_ipv4: ""
   blocking_ipv6: ""
   blocked_response_ttl: {{ adguardhome_dns_blocked_response_ttl }}
   parental_block_host: family-block.dns.adguard.com
+  parental_enabled: {{ adguardhome_dns_parental_enabled }}
+  safesearch_enabled: {{ adguardhome_safesearch_enabled }}
+  safebrowsing_enabled: {{ adguardhome_safebrowsing_enabled }}
   safebrowsing_block_host: standard-block.dns.adguard.com
-  ratelimit: 20
+  # Anti-DNS amplification features
+  ratelimit: 0
   ratelimit_whitelist: []
-  refuse_any: true
+  refuse_any: false
+  # Upstream DNS servers settings
   upstream_dns:
 {% for dns_server in adguardhome_dns_upstream_dns %}
   - {{ dns_server }}
@@ -52,14 +60,8 @@ dns:
   aaaa_disabled: false
   enable_dnssec: {{ adguardhome_dns_enable_dnssec }}
   edns_client_subnet: false
-  filtering_enabled: {{ adguardhome_dns_filtering_enabled }}
   filters_update_interval: {{ adguardhome_dns_filters_update_interval }}
   parental_enabled: false
-  safesearch_enabled: {{ adguardhome_safesearch_enabled }}
-  safebrowsing_enabled: {{ adguardhome_safebrowsing_enabled }}
-  safebrowsing_cache_size: 1048576
-  safesearch_cache_size: 1048576
-  parental_cache_size: 1048576
   cache_time: 30
 {% if adguardhome_dns_rewrites | length > 0 %}
   rewrites:
@@ -79,7 +81,7 @@ tls:
   port_dns_over_tls: 853
   port_dns_over_quic: 784
   allow_unencrypted_doh: false
-  strict_sni_check: false
+  strict_sni_check: true
   certificate_chain: ""
   private_key: ""
   certificate_path: "{{ adguardhome_tls_cert_pem }}"
@@ -134,7 +136,8 @@ log_compress: true
 log_localtime: true
 log_max_backups: 0
 log_max_size: 100
-log_max_age: 3
+log_max_backups: 5
+log_max_age: 90
 log_file: syslog
 verbose: false
 schema_version: 7
