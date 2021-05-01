@@ -16,8 +16,8 @@
     path: "{{ adguardhome_data_dir }}"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_group }}"
-    mode: "0755"
-    recurse: yes
+    mode: 0755
+    recurse: true
     state: directory
   when: >-
     adguardhome_data_directory_state.owner != adguardhome_user or
@@ -29,8 +29,8 @@
     path: "{{ adguardhome_config_dir }}"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_group }}"
-    mode: "0755"
-    recurse: no
+    mode: 0755
+    recurse: false
     state: directory
 
 - name: Check if config file exists

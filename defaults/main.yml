@@ -38,8 +38,8 @@ adguardhome_disable_systemd_dnsstubresolver: true
 # TLS Cert. Docker repo
 adguardhome_docker_repo: kitos9112/certbot-aarch64-dns-cloudflare
 adguardhome_certbot_dir: /opt/certbot
-#Default variable for AdGuard Settings
 
+# Default variable for AdGuard Settings
 adguardhome_bind_host: 127.0.0.1
 adguardhome_bind_http_port: 1880
 adguardhome_bind_https_port: 1443

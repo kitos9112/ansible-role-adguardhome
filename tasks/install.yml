@@ -2,20 +2,22 @@
 - name: Ensure bin directory exists
   file:
     dest: "{{ adguardhome_bin_dir }}"
-    recurse: yes
+    recurse: true
     state: directory
+    mode: 0755
 
 - name: Create temporary directory
   file:
     dest: "{{ adguardhome_unpack_dir }}"
-    recurse: yes
+    recurse: true
     state: directory
+    mode: 0755
 
 - name: "Download and extract archive (v{{ adguardhome_version }} / {{ adguardhome_arch }})"
   ansible.builtin.unarchive:
     src: "{{ adguardhome_download_url_base }}/v{{ adguardhome_version }}/{{ adguardhome_archive }}"
     dest: "{{ adguardhome_unpack_dir }}"
-    remote_src: yes
+    remote_src: true
     extra_opts:
       - "--strip-components=1"
 
@@ -24,7 +26,7 @@
     src: "{{ adguardhome_unpack_dir }}/{{ adguardhome_bin_name }}/AdGuardHome"
     dest: "{{ adguardhome_bin_file }}"
     mode: "0755"
-    remote_src: yes
+    remote_src: true
   notify: restart adguardhome
 
 - name: Remove temporary directory

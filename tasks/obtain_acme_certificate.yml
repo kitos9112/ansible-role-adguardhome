@@ -3,6 +3,7 @@
   file:
     path: "{{ adguardhome_certbot_dir }}/etc"
     state: directory
+    mode: 0755
 
 - name: Copy cf.ini into etc folder
   template:
@@ -25,9 +26,11 @@
     chdir: "{{ adguardhome_certbot_dir }}"
     cmd: ./docker-cert-adguard.sh certonly
   register: adguardhome_cert_check
-  check_mode: no
+  check_mode: false
   changed_when: >-
     adguardhome_cert_check.stdout.find('Certificate not yet due for renewal; no action taken') == -1
+  args:
+    executable: /bin/bash
 
 - name: Create a cronjob to automatically renew the cert
   cron:

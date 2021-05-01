@@ -20,6 +20,7 @@
   template:
     src: resolvconf.conf.j2
     dest: /etc/resolvconf.conf
+    mode: 06400
 
 - name: Check version of installed binary
   shell: >-
@@ -30,7 +31,7 @@
   args:
     executable: /bin/bash
   register: adguardhome_version_check
-  check_mode: no
+  check_mode: false
   changed_when: >-
     adguardhome_version_check.stdout.find(adguardhome_version) == -1
   failed_when: >-
@@ -43,7 +44,7 @@
 - name: Ensure user exists
   user:
     name: "{{ adguardhome_user }}"
-    create_home: no
+    create_home: false
     system: "{{ adguardhome_system_user }}"
     state: present
 

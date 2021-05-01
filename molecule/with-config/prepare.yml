@@ -6,9 +6,10 @@
       file:
         path: /opt/adguardhome/config
         state: directory
-        mode: "0755"
+        mode: 0755
         owner: root
         group: root
+
     - name: Create default config file
       copy:
         dest: /opt/adguardhome/config/AdGuardHome.yml

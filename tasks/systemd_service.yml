@@ -42,7 +42,7 @@
   service:
     name: "{{ adguardhome_service_name }}"
     state: started
-    enabled: yes
+    enabled: true
   when:
     - settings.changed |bool
 
