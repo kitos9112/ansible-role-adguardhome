@@ -1,6 +1,10 @@
 ---
 - name: Get info about running services
-  service_facts:
+  ansible.builtin.service_facts:
+
+- name: Print service facts
+  ansible.builtin.debug:
+    var: ansible_facts.services
 
 - name: Install systemd service
   template:
