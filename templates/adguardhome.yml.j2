@@ -13,13 +13,14 @@ language: ""
 debug_pprof: false
 web_session_ttl: {{ adguardhome_web_session_ttl }}
 dns:
-  bind_host: {{ adguardhome_dns_bind_host }}
+  bind_hosts:
+  - {{ adguardhome_dns_bind_host }}
   port: 53
   statistics_interval: 30
   # Query log settings
   querylog_enabled: true
   querylog_file_enabled: true
-  querylog_interval: 30
+  querylog_interval: 720h
   querylog_size_memory: 100
   anonymize_client_ip: false
   # Protection settings
@@ -50,6 +51,7 @@ dns:
 {% for dns_server in adguardhome_dns_bootstrap_dns %}
   - {{ dns_server }}
 {% endfor %}
+  upstream_dns_file: ""
   all_servers: true
   fastest_addr: false
   allowed_clients: []
