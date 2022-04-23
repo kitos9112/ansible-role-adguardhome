@@ -7,7 +7,7 @@
     var: ansible_facts.services
 
 - name: Install systemd service
-  template:
+  ansible.builtin.template:
     src: adguardhome.service.j2
     dest: "/etc/systemd/system/{{ adguardhome_service_name }}.service"
     mode: "0664"
@@ -18,42 +18,21 @@
 
 - name: Apply configuration settings
   register: settings
-  template:
+  ansible.builtin.template:
     src: adguardhome.yml.j2
     dest: "{{ adguardhome_config_file }}"
     mode: 0644
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_user }}"
-
-- name: stop adguardhome service
-  service:
-    name: "{{ adguardhome_service_name }}"
-    state: stopped
-  when:
-    - settings.changed |bool
-
-- name: apply adguardhome configuration settings
-  template:
-    src: adguardhome.yml.j2
-    dest: "{{ adguardhome_config_file }}"
-    mode: 0644
-    owner: "{{ adguardhome_user }}"
-    group: "{{ adguardhome_user }}"
-  when:
-    - settings.changed |bool
-
-- name: start && enable adguardhome service
-  service:
-    name: "{{ adguardhome_service_name }}"
-    state: started
-    enabled: true
-  when:
-    - settings.changed |bool
+  notify:
+    - stop adguardhome
+    - apply adguardhome configuration
+    - start and enable adguardhome service
 
 - name: Get info about running services
-  service_facts:
+  ansible.builtin.service_facts:
 
 - name: Assert adguardhome service is running
-  fail:
+  ansible.builtin.fail:
     msg: "Seems like AdGuardHome service could not be started. Human intervention required"
   when: ansible_facts.services.get("adguardhome.service", {}).get("state") != "running"

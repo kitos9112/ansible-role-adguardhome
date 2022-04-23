@@ -7,7 +7,7 @@ protecting and ad-blocking DNS server with Ansible.
 
 ## Requirements
 
-- Ansible >= 2.9 (might work on previous versions)
+- Ansible >= 2.12 (might work on previous versions)
 
 ## Supported Operating Systems
 
@@ -99,3 +99,4 @@ This project is licensed under the MIT License.
 ## Author Information
 
 [Jim Myhrberg](https://jimeh.me/)
+[Marcos Soutullo](https://github.com/kitos9112)

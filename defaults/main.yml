@@ -36,7 +36,7 @@ adguardhome_service_start: true
 adguardhome_disable_systemd_dnsstubresolver: true
 
 # TLS Cert. Docker repo
-adguardhome_docker_repo: kitos9112/certbot-aarch64-dns-cloudflare
+adguardhome_docker_repo: "certbot/{% if ansible_architecture == 'x86_64' %}v1.26.0{% elif ansible_architecture == 'aarch64' %}arm64v8-v1.26.0{% endif %}"
 adguardhome_certbot_dir: /opt/certbot
 
 # Default variable for AdGuard Settings
@@ -100,6 +100,7 @@ adguardhome_dhcpv4_lease_duration: 86400
 adguardhome_dhcpv4_icmp_timeout_msec: 1000
 adguardhome_dhcpv4_options: []
 
+adguardhome_acme_cloudflare_certificate_enabled: true
 adguardhome_tls_hostname: "pi-1050.uk.msrpi.com"
 adguardhome_tls_cert_pem: "{{adguardhome_config_dir}}/fullchain.pem"
 adguardhome_tls_key_pem: "{{adguardhome_config_dir}}/privkey.pem"

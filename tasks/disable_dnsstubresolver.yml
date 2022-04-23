@@ -1,6 +1,6 @@
 ---
 - name: Disable DNSStubListener
-  ini_file:
+  community.general.ini_file:
     path: /etc/systemd/resolved.conf
     section: Resolve
     option: DNSStubListener
@@ -9,7 +9,7 @@
   notify: restart systemd-resolved
 
 - name: Symlink /etc/resolv.conf to /run/systemd/resolve/resolv.conf
-  file:
+  ansible.builtin.file:
     src: /run/systemd/resolve/resolv.conf
     dest: /etc/resolv.conf
     state: link

@@ -1,6 +1,10 @@
 ---
 dependency:
   name: galaxy
+  options:
+    role-file: requirements.yml
+    requirements-file: requirements.yml
+
 driver:
   name: docker
 lint: |
@@ -9,24 +13,8 @@ lint: |
   ansible-lint
   flake8
 platforms:
-  - name: centos-7
-    image: centos:7
-    command: /sbin/init
-    tmpfs:
-      - /run
-      - /tmp
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  - name: centos-8
-    image: centos:8
-    command: /sbin/init
-    tmpfs:
-      - /run
-      - /tmp
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  - name: debian-9
-    image: jrei/systemd-debian:9
+  - name: fedora-latest
+    image: jrei/systemd-fedora:latest
     command: /sbin/init
     privileged: true
     tmpfs:
@@ -34,6 +22,7 @@ platforms:
       - /tmp
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    pre_build_image: false
   - name: debian-10
     image: jrei/systemd-debian:10
     command: /sbin/init
@@ -43,8 +32,9 @@ platforms:
       - /tmp
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  - name: ubuntu-16.04
-    image: jrei/systemd-ubuntu:16.04
+    pre_build_image: false
+  - name: debian-11
+    image: jrei/systemd-debian:11
     command: /sbin/init
     privileged: true
     tmpfs:
@@ -52,8 +42,9 @@ platforms:
       - /tmp
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  - name: ubuntu-18.04
-    image: jrei/systemd-ubuntu:18.04
+    pre_build_image: false
+  - name: ubuntu-20.04
+    image: jrei/systemd-ubuntu:20.04
     command: /sbin/init
     privileged: true
     tmpfs:
@@ -61,11 +52,18 @@ platforms:
       - /tmp
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    pre_build_image: false
+  - name: ubuntu-22.04
+    image: jrei/systemd-ubuntu:22.04
+    command: /sbin/init
+    privileged: true
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    pre_build_image: false
 provisioner:
   name: ansible
-  lint:
-    name: ansible-lint
 verifier:
   name: testinfra
-  lint:
-    name: flake8

@@ -1,6 +1,6 @@
 ---
 - name: Install system dependencies
-  package:
+  ansible.builtin.package:
     name:
       - libcap2-bin
     state: present
