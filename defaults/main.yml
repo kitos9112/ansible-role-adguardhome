@@ -18,7 +18,7 @@ adguardhome_group: "{{ adguardhome_user }}"
 # When setting adguardhome_user to something other than "root", this determines
 # if the user will be created as a system user or not. Rule of thumb is if the
 # user is logged in to by humans, it probably is not a system user.
-adguardhome_system_user: true
+adguardhome_system_user: True
 
 # Default paths.
 adguardhome_bin_dir: "/opt/{{ adguardhome_service_name }}/bin"
@@ -29,14 +29,14 @@ adguardhome_tmp_dir: /tmp
 
 # Enable and start systemd service unit?
 adguardhome_service_name: "adguardhome"
-adguardhome_service_enable: true
-adguardhome_service_start: true
+adguardhome_service_enable: True
+adguardhome_service_start: True
 
 # Disable DNSStubResolver if systemd-resolved servicee is running.
-adguardhome_disable_systemd_dnsstubresolver: true
+adguardhome_disable_systemd_dnsstubresolver: True
 
 # TLS Cert. Docker repo
-adguardhome_docker_repo: kitos9112/certbot-aarch64-dns-cloudflare
+adguardhome_docker_repo: "certbot/{% if ansible_architecture == 'x86_64' %}v1.26.0{% elif ansible_architecture == 'aarch64' %}arm64v8-v1.26.0{% endif %}"
 adguardhome_certbot_dir: /opt/certbot
 
 # Default variable for AdGuard Settings
@@ -71,7 +71,7 @@ adguardhome_safebrowsing_enabled: true
 adguardhome_dns_parental_enabled: false
 adguardhome_dns_cache_optimistic: true
 adguardhome_dns_filtering_enabled: true
-adguardhome_dns_filters_update_interval: 4
+adguardhome_dns_filters_update_interval: 24
 adguardhome_dns_filters:
   - enabled: true
     url: https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
@@ -88,8 +88,7 @@ adguardhome_dns_filters:
 
 adguardhome_dns_enable_dnssec: true
 adguardhome_dns_protection_enabled: true
-adguardhome_user_roles:
-  - ""
+adguardhome_user_roles: []
 adguardhome_dhcpv4_enabled: false
 adguardhome_dhcpv4_interface_name: eth0
 adguardhome_dhcpv4_gateway_ip: 10.10.30.1
@@ -100,6 +99,7 @@ adguardhome_dhcpv4_lease_duration: 86400
 adguardhome_dhcpv4_icmp_timeout_msec: 1000
 adguardhome_dhcpv4_options: []
 
-adguardhome_tls_hostname: "pi-1050.uk.msrpi.com"
-adguardhome_tls_cert_pem: "{{adguardhome_config_dir}}/fullchain.pem"
-adguardhome_tls_key_pem: "{{adguardhome_config_dir}}/privkey.pem"
+adguardhome_acme_cloudflare_certificate_enabled: True
+adguardhome_tls_hostname: test.uk.msrpi.com
+adguardhome_tls_cert_pem: "{{ adguardhome_config_dir }}/fullchain.pem"
+adguardhome_tls_key_pem: "{{ adguardhome_config_dir }}/privkey.pem"

@@ -1,18 +1,18 @@
 ---
 - name: Ensure binary file has correct permissions
-  file:
+  ansible.builtin.file:
     path: "{{ adguardhome_bin_file }}"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_group }}"
     mode: "0755"
 
 - name: Check state of data directory
-  file:
+  ansible.builtin.file:
     path: "{{ adguardhome_data_dir }}"
   register: adguardhome_data_directory_state
 
 - name: Ensure data directory exists and has correct permissions
-  file:
+  ansible.builtin.file:
     path: "{{ adguardhome_data_dir }}"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_group }}"
@@ -25,7 +25,7 @@
     adguardhome_data_directory_state.mode != "0755"
 
 - name: Ensure config directory exists and has correct permissions
-  file:
+  ansible.builtin.file:
     path: "{{ adguardhome_config_dir }}"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_group }}"
@@ -34,12 +34,12 @@
     state: directory
 
 - name: Check if config file exists
-  stat:
+  ansible.builtin.stat:
     path: "{{ adguardhome_config_file }}"
   register: adguardhome_config_file_state
 
 - name: Ensure config file has correct permissions
-  file:
+  ansible.builtin.file:
     path: "{{ adguardhome_config_file }}"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_group }}"

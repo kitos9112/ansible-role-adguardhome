@@ -44,6 +44,6 @@ def test_adguardhome_service(host):
 
 
 def test_adguardhome_http_setup(host):
-    socket = host.socket('tcp://127.0.0.1:3000')
+    socket = host.socket('tcp://127.0.0.1:1880')
 
     assert socket.is_listening

@@ -1,21 +1,20 @@
 # Ansible Role: AdGuard Home
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jimeh/ansible-adguardhome/CI?style=flat) ![GitHub](https://img.shields.io/github/license/jimeh/ansible-adguardhome?style=flat) [![Ansible Galaxy](https://img.shields.io/badge/galaxy-jimeh.adguardhome-660198?style=flat)](https://galaxy.ansible.com/jimeh/adguardhome) ![Ansible Quality Score](https://img.shields.io/ansible/quality/46001?style=flat)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/kitos9112/ansible-adguardhome/CI?style=flat) ![GitHub](https://img.shields.io/github/license/kitos9112/ansible-adguardhome?style=flat) [![Ansible Galaxy](https://img.shields.io/badge/galaxy-kitos9112.adguardhome-660198?style=flat)](https://galaxy.ansible.com/kitos9112/adguardhome) ![Ansible Quality Score](https://img.shields.io/ansible/quality/46001?style=flat)
 
 Install [AdGuard Home](https://github.com/AdguardTeam/AdGuardHome) privacy
 protecting and ad-blocking DNS server with Ansible.
 
 ## Requirements
 
-- Ansible >= 2.9 (might work on previous versions)
+- Ansible >= 2.12 (might work on previous versions)
 
 ## Supported Operating Systems
 
 Tested on:
 
-- Ubuntu 16.04 and 18.04
-- Debian stretch and buster
-- EL 7 and 8 derived distributions
+- Ubuntu 20.04 and 22.04
+- Recent Fedora
 
 It will likely work on other Debian and RHEL derived distros and versions than
 what's listed above.
@@ -69,7 +68,7 @@ The following example will install the latest available release of AdGuard Home:
 ```yaml
 - hosts: all
   roles:
-    - { role: jimeh.adguardhome }
+    - { role: kitos9112.adguardhome }
 ```
 
 If you did not already have a configuration file in place, AdGuard Home will now
@@ -98,4 +97,4 @@ This project is licensed under the MIT License.
 
 ## Author Information
 
-[Jim Myhrberg](https://jimeh.me/)
+[Marcos Soutullo](https://github.com/kitos9112)

@@ -1,33 +1,32 @@
 ---
 - name: Setup Debian
-  include_tasks: setup_debian.yml
+  ansible.builtin.include_tasks: setup_debian.yml
   when: ansible_os_family == 'Debian'
 
 - name: Setup RedHat
-  include_tasks: setup_redhat.yml
+  ansible.builtin.include_tasks: setup_redhat.yml
   when: ansible_os_family == 'RedHat'
 
 - name: Check if binary is installed
-  stat:
+  ansible.builtin.stat:
     path: "{{ adguardhome_bin_file }}"
   register: adguardhome_binary_check
 
 - name: Check latest released version
-  include_tasks: latest_version.yml
+  ansible.builtin.include_tasks: latest_version.yml
   when: adguardhome_version == 'latest'
 
 - name: Configure resolvconf.conf
-  template:
+  ansible.builtin.template:
     src: resolvconf.conf.j2
     dest: /etc/resolvconf.conf
     mode: 06400
 
 - name: Check version of installed binary
-  shell: >-
+  ansible.builtin.shell: >-
     set -o pipefail
     && "{{ adguardhome_bin_file }}" -c /dev/null --check-config 2>&1
-    | grep -m 1 -oE 'version ([0-9.]+)' | cut -d" " -f2| cut -d" " -f2
-
+    | grep -m 1 -oE 'version v([0-9.]+)' | cut -d" " -f2| cut -d" " -f2
   args:
     executable: /bin/bash
   register: adguardhome_version_check
@@ -42,7 +41,7 @@
     adguardhome_binary_check.stat.exists
 
 - name: Ensure user exists
-  user:
+  ansible.builtin.user:
     name: "{{ adguardhome_user }}"
     create_home: false
     system: "{{ adguardhome_system_user }}"
@@ -55,10 +54,10 @@
     or (not adguardhome_binary_check.stat.exists)
 
 - name: Ensure various paths exist with correct permissions
-  include_tasks: paths.yml
+  ansible.builtin.include_tasks: paths.yml
 
 - name: Allow binary to bind to ports lower than 1024 as a non-root user
-  capabilities:
+  community.general.capabilities:
     path: "{{ adguardhome_bin_file }}"
     capability: cap_net_bind_service+eip
     state: present
@@ -66,7 +65,7 @@
     adguardhome_user != "root"
 
 - name: Disallow binary to bind to ports lower than 1024 as a non-root user
-  capabilities:
+  community.general.capabilities:
     path: "{{ adguardhome_bin_file }}"
     capability: cap_net_bind_service+eip
     state: absent
@@ -76,15 +75,19 @@
 - name: Install Docker-cert.sh script for obtaining Let's Encrypt certificates
   vars:
     ansible_become: true
-  include_tasks: obtain_acme_certificate.yml
+  ansible.builtin.include_tasks: obtain_acme_certificate.yml
+  tags:
+    - molecule-notest
+  when: >-
+    adguardhome_acme_cloudflare_certificate_enabled
 
 - name: Install systemd service
-  include_tasks: systemd_service.yml
+  ansible.builtin.include_tasks: systemd_service.yml
   when: >-
     ansible_service_mgr == "systemd" and adguardhome_service_enable
 
 - name: Disable systemd-resolved's DNSStubResolver
-  include_tasks: disable_dnsstubresolver.yml
+  ansible.builtin.include_tasks: disable_dnsstubresolver.yml
   when: >-
     adguardhome_disable_systemd_dnsstubresolver and
     ansible_facts.services

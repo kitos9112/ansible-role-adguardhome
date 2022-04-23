@@ -1,13 +1,13 @@
 ---
 - name: Ensure bin directory exists
-  file:
+  ansible.builtin.file:
     dest: "{{ adguardhome_bin_dir }}"
     recurse: true
     state: directory
     mode: 0755
 
 - name: Create temporary directory
-  file:
+  ansible.builtin.file:
     dest: "{{ adguardhome_unpack_dir }}"
     recurse: true
     state: directory
@@ -30,6 +30,6 @@
   notify: restart adguardhome
 
 - name: Remove temporary directory
-  file:
+  ansible.builtin.file:
     path: "{{ adguardhome_unpack_dir }}"
     state: absent

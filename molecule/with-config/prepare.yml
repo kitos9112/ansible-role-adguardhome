@@ -3,7 +3,7 @@
   hosts: all
   tasks:
     - name: Create config directory
-      file:
+      ansible.builtin.file:
         path: /opt/adguardhome/config
         state: directory
         mode: 0755
@@ -11,7 +11,7 @@
         group: root
 
     - name: Create default config file
-      copy:
+      ansible.builtin.copy:
         dest: /opt/adguardhome/config/AdGuardHome.yml
         mode: "0644"
         owner: root

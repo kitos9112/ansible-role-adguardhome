@@ -2,6 +2,6 @@
 - name: Converge
   hosts: all
   roles:
-    - role: ansible-adguardhome
+    - role: kitos9112.adguardhome
       vars:
         adguardhome_user: adguard
