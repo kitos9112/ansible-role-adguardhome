@@ -17,46 +17,35 @@ dns:
   - {{ adguardhome_dns_bind_host }}
   port: 53
   statistics_interval: 30
-  # Query log settings
   querylog_enabled: true
   querylog_file_enabled: true
   querylog_interval: 720h
   querylog_size_memory: 100
   anonymize_client_ip: false
-  # Protection settings
   protection_enabled: {{ adguardhome_dns_protection_enabled }}
-  filtering_enabled: {{ adguardhome_dns_filtering_enabled }}
   blocking_mode: default
   blocking_ipv4: ""
   blocking_ipv6: ""
   blocked_response_ttl: {{ adguardhome_dns_blocked_response_ttl }}
   parental_block_host: family-block.dns.adguard.com
-  parental_enabled: {{ adguardhome_dns_parental_enabled }}
-  safesearch_enabled: {{ adguardhome_safesearch_enabled }}
-  safebrowsing_enabled: {{ adguardhome_safebrowsing_enabled }}
   safebrowsing_block_host: standard-block.dns.adguard.com
-  safebrowsing_cache_size: 1048576
-  safesearch_cache_size: 1048576
-  parental_cache_size: 1048576
-  # Anti-DNS amplification features
   ratelimit: 0
   ratelimit_whitelist: []
   refuse_any: false
-  # Upstream DNS servers settings
   upstream_dns:
 {% for dns_server in adguardhome_dns_upstream_dns %}
   - {{ dns_server }}
 {% endfor %}
+  upstream_dns_file: ""
   bootstrap_dns:
 {% for dns_server in adguardhome_dns_bootstrap_dns %}
   - {{ dns_server }}
 {% endfor %}
-  upstream_dns_file: ""
   all_servers: true
   fastest_addr: false
+  fastest_timeout: 1s
   allowed_clients: []
   disallowed_clients: []
-  fastest_timeout: 1s
   blocked_hosts:
   - version.bind
   - id.server
@@ -74,7 +63,14 @@ dns:
   edns_client_subnet: false
   max_goroutines: 300
   ipset: []
+  filtering_enabled: {{ adguardhome_dns_filtering_enabled }}
   filters_update_interval: {{ adguardhome_dns_filters_update_interval }}
+  parental_enabled: {{ adguardhome_dns_parental_enabled }}
+  safesearch_enabled: {{ adguardhome_safesearch_enabled }}
+  safebrowsing_enabled: {{ adguardhome_safebrowsing_enabled }}
+  safebrowsing_cache_size: 1048576
+  safesearch_cache_size: 1048576
+  parental_cache_size: 1048576
   cache_time: 30
 {% if adguardhome_dns_rewrites | length > 0 %}
   rewrites:
@@ -93,7 +89,7 @@ dns:
   local_ptr_upstreams: []
 tls:
   enabled: true
-  server_name: "{{ adguardhome_tls_hostname }}"
+  server_name: {{ adguardhome_tls_hostname }}
   force_https: true
   port_https: {{ adguardhome_bind_https_port }}
   port_dns_over_tls: 853
@@ -104,8 +100,8 @@ tls:
   strict_sni_check: true
   certificate_chain: ""
   private_key: ""
-  certificate_path: "{{ adguardhome_tls_cert_pem }}"
-  private_key_path: "{{ adguardhome_tls_key_pem }}"
+  certificate_path: {{ adguardhome_tls_cert_pem }}
+  private_key_path: {{ adguardhome_tls_key_pem }}
 filters:
 {% for filters in adguardhome_dns_filters %}
 {% for key, value in filters.items() %}
@@ -117,10 +113,14 @@ filters:
 {% endfor %}
 {% endfor %}
 whitelist_filters: []
+{% if adguardhome_user_roles|length == 0 %}
+user_rules: []
+{% else %}
 user_rules:
 {% for user_rule in adguardhome_user_roles %}
   - {{ user_rule }}
 {% endfor %}
+{% endif %}
 {% if adguardhome_dhcpv4_enabled | bool %}
 dhcp:
   enabled: true
@@ -154,8 +154,8 @@ dhcp:
 clients: []
 log_compress: true
 log_localtime: true
-log_max_size: 100
 log_max_backups: 5
+log_max_size: 100
 log_max_age: 90
 log_file: syslog
 verbose: false

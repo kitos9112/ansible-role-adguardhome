@@ -26,7 +26,7 @@
   ansible.builtin.shell: >-
     set -o pipefail
     && "{{ adguardhome_bin_file }}" -c /dev/null --check-config 2>&1
-    | grep -m 1 -oE 'version ([0-9.]+)' | cut -d" " -f2| cut -d" " -f2
+    | grep -m 1 -oE 'version v([0-9.]+)' | cut -d" " -f2| cut -d" " -f2
   args:
     executable: /bin/bash
   register: adguardhome_version_check

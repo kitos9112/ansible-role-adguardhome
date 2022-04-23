@@ -28,6 +28,11 @@
     - stop adguardhome
     - apply adguardhome configuration
     - start and enable adguardhome service
+  tags:
+    - molecule-idempotence-notest
+
+- name: Make sure handlers are run
+  ansible.builtin.meta: flush_handlers
 
 - name: Get info about running services
   ansible.builtin.service_facts:

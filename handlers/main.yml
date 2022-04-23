@@ -15,14 +15,18 @@
     state: stopped
   when:
     - settings.changed |bool
+  tags:
+    - molecule-idempotence-notest
 
-- name: apply adguardhome configuration settings
+- name: apply adguardhome configuration
   ansible.builtin.template:
     src: adguardhome.yml.j2
     dest: "{{ adguardhome_config_file }}"
     mode: 0644
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_user }}"
+  tags:
+    - molecule-idempotence-notest
 
 - name: start and enable adguardhome service
   ansible.builtin.service:
