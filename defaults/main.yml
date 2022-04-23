@@ -35,8 +35,8 @@ adguardhome_service_start: True
 # Disable DNSStubResolver if systemd-resolved servicee is running.
 adguardhome_disable_systemd_dnsstubresolver: True
 
-# TLS Cert. Docker repo
-adguardhome_docker_repo: "certbot/{% if ansible_architecture == 'x86_64' %}v1.26.0{% elif ansible_architecture == 'aarch64' %}arm64v8-v1.26.0{% endif %}"
+# TLS Cert. Cloudflare Docker repo
+adguardhome_certbot_cf_repo: "certbot/dns-cloudflare:{% if ansible_architecture == 'x86_64' %}v1.26.0{% elif ansible_architecture == 'aarch64' %}arm64v8-v1.26.0{% endif %}"
 adguardhome_certbot_dir: /opt/certbot
 
 # Default variable for AdGuard Settings

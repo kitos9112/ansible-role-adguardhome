@@ -24,12 +24,13 @@ docker run --rm --name certbot \
    -v "$ETC:/etc/letsencrypt:rw" \
    -v "$LIB:/var/lib/letsencrypt:rw" \
    -v "$LOG:/var/log/letsencrypt:rw" \
-   {{ adguardhome_docker_repo }} \
+   {{ adguardhome_certbot_cf_repo }} \
    --dns-cloudflare \
    --dns-cloudflare-credentials /etc/letsencrypt/cf.ini \
    --dns-cloudflare-propagation-seconds 30 \
-   --non-interactive --agree-tos --email {{ adguardhome_cf_email_address }} \
-   $1 -d {{ adguardhome_tls_hostname }}
+   --non-interactive \
+   --agree-tos \
+   --email {{ adguardhome_cf_email_address }} $1 -d {{ adguardhome_tls_hostname }}
 
 if [ $? -eq 0 ]
 then
