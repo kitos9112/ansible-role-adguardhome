@@ -28,8 +28,7 @@
   tags:
     - molecule-idempotence-notest
 
-- name: start and enable adguardhome service
+- name: restart systemd-resolved
   ansible.builtin.service:
-    name: "{{ adguardhome_service_name }}"
-    state: started
-    enabled: true
+    name: systemd-resolved
+    state: restarted

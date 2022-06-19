@@ -1,11 +1,4 @@
 ---
-- name: Get info about running services
-  ansible.builtin.service_facts:
-
-- name: Print service facts
-  ansible.builtin.debug:
-    var: ansible_facts.services
-
 - name: Install systemd service
   ansible.builtin.template:
     src: adguardhome.service.j2
@@ -27,17 +20,14 @@
   notify:
     - stop adguardhome
     - apply adguardhome configuration
-    - start and enable adguardhome service
   tags:
     - molecule-idempotence-notest
 
 - name: Make sure handlers are run
   ansible.builtin.meta: flush_handlers
 
-- name: Get info about running services
-  ansible.builtin.service_facts:
-
-- name: Assert adguardhome service is running
-  ansible.builtin.fail:
-    msg: "Seems like AdGuardHome service could not be started. Human intervention required"
-  when: ansible_facts.services.get("adguardhome.service", {}).get("state") != "running"
+- name: start and enable adguardhome service
+  ansible.builtin.service:
+    name: "{{ adguardhome_service_name }}"
+    state: started
+    enabled: true

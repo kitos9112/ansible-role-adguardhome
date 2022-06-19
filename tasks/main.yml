@@ -88,8 +88,3 @@
 
 - name: Disable systemd-resolved's DNSStubResolver
   ansible.builtin.include_tasks: disable_dnsstubresolver.yml
-  when: >-
-    adguardhome_disable_systemd_dnsstubresolver and
-    ansible_facts.services
-    .get("systemd-resolved.service", {})
-    .get("state") == "running"
