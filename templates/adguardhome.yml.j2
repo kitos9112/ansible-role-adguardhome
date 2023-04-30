@@ -1,6 +1,5 @@
 bind_host: {{ adguardhome_bind_host }}
 bind_port: {{ adguardhome_bind_http_port }}
-beta_bind_port: 0
 users:
 {% for username, password in adguardhome_home_users.items() %}
 - name: {{ username }}
@@ -10,23 +9,20 @@ auth_attempts: 5
 block_auth_min: 15
 http_proxy: ""
 language: ""
+theme: auto
 debug_pprof: false
 web_session_ttl: {{ adguardhome_web_session_ttl }}
 dns:
   bind_hosts:
   - {{ adguardhome_dns_bind_host }}
   port: 53
-  statistics_interval: 30
-  querylog_enabled: true
-  querylog_file_enabled: true
-  querylog_interval: 720h
-  querylog_size_memory: 100
   anonymize_client_ip: false
   protection_enabled: {{ adguardhome_dns_protection_enabled }}
   blocking_mode: default
   blocking_ipv4: ""
   blocking_ipv6: ""
   blocked_response_ttl: {{ adguardhome_dns_blocked_response_ttl }}
+  protection_disabled_until: null
   parental_block_host: family-block.dns.adguard.com
   safebrowsing_block_host: standard-block.dns.adguard.com
   ratelimit: 0
@@ -60,9 +56,9 @@ dns:
   bogus_nxdomain: []
   aaaa_disabled: false
   enable_dnssec: {{ adguardhome_dns_enable_dnssec }}
-  edns_client_subnet: false
   max_goroutines: 300
   ipset: []
+  ipset_file: ""
   filtering_enabled: {{ adguardhome_dns_filtering_enabled }}
   filters_update_interval: {{ adguardhome_dns_filters_update_interval }}
   parental_enabled: {{ adguardhome_dns_parental_enabled }}
@@ -83,10 +79,15 @@ dns:
 {% endif %}
   blocked_services: []
   upstream_timeout: 10s
-  local_domain_name: {{ adguardhome_dns_local_domain_name }}
-  resolve_clients: true
   use_private_ptr_resolvers: true
-  local_ptr_upstreams: []
+  local_ptr_upstreams:
+{% for upstream in adguardhome_dns_local_ptr_upstreams %}
+    - {{ upstream }}
+{% endfor %}
+  use_dns64: false
+  dns64_prefixes: []
+  serve_http3: false
+  use_http3_upstreams: false
 tls:
   enabled: true
   server_name: {{ adguardhome_tls_hostname }}
@@ -97,11 +98,20 @@ tls:
   port_dnscrypt: 0
   dnscrypt_config_file: ""
   allow_unencrypted_doh: false
-  strict_sni_check: true
   certificate_chain: ""
   private_key: ""
   certificate_path: {{ adguardhome_tls_cert_pem }}
   private_key_path: {{ adguardhome_tls_key_pem }}
+querylog:
+  ignored: []
+  enabled: true
+  interval: 720h
+  size_memory: 100
+  file_enabled: true
+statistics:
+  ignored: []
+  interval: 1h
+  enabled: true
 filters:
 {% for filters in adguardhome_dns_filters %}
 {% for key, value in filters.items() %}
@@ -125,6 +135,7 @@ user_rules:
 dhcp:
   enabled: true
   interface_name: {{ adguardhome_dhcpv4_interface_name }}
+  local_domain_name: {{ adguardhome_dns_local_domain_name }}
   dhcpv4:
     gateway_ip: {{ adguardhome_dhcpv4_gateway_ip }}
     subnet_mask: {{ adguardhome_dhcpv4_subnet_mask }}
@@ -137,6 +148,7 @@ dhcp:
 dhcp:
   enabled: false
   interface_name: ""
+  local_domain_name: {{ adguardhome_dns_local_domain_name }}
   dhcpv4:
     gateway_ip: ""
     subnet_mask: ""
@@ -151,7 +163,14 @@ dhcp:
     lease_duration: 86400
     ra_slaac_only: false
     ra_allow_slaac: false
-clients: []
+clients:
+  runtime_sources:
+    whois: true
+    arp: true
+    rdns: true
+    dhcp: true
+    hosts: true
+  persistent: []
 log_compress: true
 log_localtime: true
 log_max_backups: 5
@@ -163,4 +182,4 @@ os:
   group: ""
   user: ""
   rlimit_nofile: 0
-schema_version: 12
+schema_version: 20
