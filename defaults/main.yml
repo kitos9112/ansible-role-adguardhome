@@ -36,7 +36,7 @@ adguardhome_service_start: True
 adguardhome_disable_systemd_dnsstubresolver: True
 
 # TLS Cert. Cloudflare Docker repo
-adguardhome_certbot_cf_repo: "certbot/dns-cloudflare:v2.5.0"
+adguardhome_certbot_cf_repo: "certbot/dns-cloudflare:v2.8.0"
 adguardhome_certbot_dir: /opt/certbot
 
 # Default variable for AdGuard Settings
