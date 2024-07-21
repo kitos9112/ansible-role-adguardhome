@@ -1,10 +1,8 @@
 ---
-- name: Install python dependencies
-  ansible.builtin.pip:
-    name: github3.py
-    state: present
-
 - name: Lookup latest release
+  delegate_to: localhost
+  vars:
+    ansible_become: false
   community.general.github_release:
     action: latest_release
     user: AdguardTeam

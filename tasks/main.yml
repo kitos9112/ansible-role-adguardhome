@@ -85,6 +85,3 @@
   ansible.builtin.include_tasks: systemd_service.yml
   when: >-
     ansible_service_mgr == "systemd" and adguardhome_service_enable
-
-- name: Disable systemd-resolved's DNSStubResolver
-  ansible.builtin.include_tasks: disable_dnsstubresolver.yml
