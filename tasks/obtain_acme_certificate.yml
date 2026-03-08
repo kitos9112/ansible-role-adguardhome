@@ -5,6 +5,20 @@
     state: directory
     mode: 0755
 
+- name: Ensure Cloudflare credentials for certbot are configured
+  ansible.builtin.assert:
+    that:
+      - >-
+        (adguardhome_cf_api_token | default('') | trim | length > 0) or
+        (
+          adguardhome_cf_email_address | default('') | trim | length > 0 and
+          adguardhome_cf_api_key | default('') | trim | length > 0
+        )
+    fail_msg: >-
+      Configure Cloudflare credentials for ACME.
+      Use `adguardhome_cf_api_token`, or both
+      `adguardhome_cf_email_address` and `adguardhome_cf_api_key`.
+
 - name: Copy Cloudflare config into etc folder
   ansible.builtin.template:
     src: cf.ini.j2
@@ -28,7 +42,16 @@
   register: adguardhome_cert_check
   check_mode: false
   changed_when: >-
-    adguardhome_cert_check.stdout.find('Certificate not yet due for renewal; no action taken') == -1
+    ((adguardhome_cert_check.stdout | default('')) ~
+    (adguardhome_cert_check.stderr | default('')))
+    .find('Certificate not yet due for renewal; no action taken') == -1
+
+- name: Ensure cron service is enabled and started
+  ansible.builtin.service:
+    name: "{{ 'cron' if ansible_facts['os_family'] == 'Debian' else 'crond' }}"
+    state: started
+    enabled: true
+  when: ansible_facts["service_mgr"] == "systemd"
 
 - name: Create a cronjob to automatically renew the cert
   ansible.builtin.cron:

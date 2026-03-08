@@ -1,11 +1,11 @@
 ---
 - name: Setup Debian
   ansible.builtin.include_tasks: setup_debian.yml
-  when: ansible_os_family == 'Debian'
+  when: ansible_facts["os_family"] == 'Debian'
 
 - name: Setup RedHat
   ansible.builtin.include_tasks: setup_redhat.yml
-  when: ansible_os_family == 'RedHat'
+  when: ansible_facts["os_family"] == 'RedHat'
 
 - name: Check if binary is installed
   ansible.builtin.stat:
@@ -56,19 +56,44 @@
 - name: Ensure various paths exist with correct permissions
   ansible.builtin.include_tasks: paths.yml
 
-- name: Allow binary to bind to ports lower than 1024 as a non-root user
-  community.general.capabilities:
-    path: "{{ adguardhome_bin_file }}"
-    capability: cap_net_bind_service+eip
-    state: present
+- name: Build required binary capabilities for non-root user
+  ansible.builtin.set_fact:
+    adguardhome_binary_capabilities_required: >-
+      {{
+        adguardhome_non_root_capabilities +
+        (
+          adguardhome_non_root_dhcp_capabilities
+          if (adguardhome_dhcpv4_enabled | bool) else []
+        )
+      }}
   when: >-
     adguardhome_user != "root"
 
-- name: Disallow binary to bind to ports lower than 1024 as a non-root user
+- name: Ensure required binary capabilities for non-root user
   community.general.capabilities:
     path: "{{ adguardhome_bin_file }}"
-    capability: cap_net_bind_service+eip
+    capability: "{{ item }}"
+    state: present
+  loop: "{{ adguardhome_binary_capabilities_required | unique }}"
+  when: >-
+    adguardhome_user != "root"
+
+- name: Remove DHCP-only capabilities when DHCP is disabled
+  community.general.capabilities:
+    path: "{{ adguardhome_bin_file }}"
+    capability: "{{ item }}"
     state: absent
+  loop: "{{ adguardhome_non_root_dhcp_capabilities | unique }}"
+  when:
+    - adguardhome_user != "root"
+    - not (adguardhome_dhcpv4_enabled | bool)
+
+- name: Remove non-root binary capabilities when running as root
+  community.general.capabilities:
+    path: "{{ adguardhome_bin_file }}"
+    capability: "{{ item }}"
+    state: absent
+  loop: "{{ (adguardhome_non_root_capabilities + adguardhome_non_root_dhcp_capabilities) | unique }}"
   when: >-
     adguardhome_user == "root"
 
@@ -81,7 +106,22 @@
   when: >-
     adguardhome_acme_cloudflare_certificate_enabled
 
+- name: Gather service facts for conflict detection
+  ansible.builtin.service_facts:
+  when: adguardhome_disable_conflicting_dns_services
+
+- name: Stop and disable conflicting DNS services
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop: "{{ adguardhome_conflicting_dns_services }}"
+  when:
+    - adguardhome_disable_conflicting_dns_services
+    - ansible_facts["service_mgr"] == "systemd"
+    - (item ~ ".service") in ansible_facts.services
+
 - name: Install systemd service
   ansible.builtin.include_tasks: systemd_service.yml
   when: >-
-    ansible_service_mgr == "systemd" and adguardhome_service_enable
+    ansible_facts["service_mgr"] == "systemd" and adguardhome_service_enable

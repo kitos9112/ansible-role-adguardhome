@@ -3,4 +3,5 @@
   ansible.builtin.package:
     name:
       - libcap2-bin
+      - cron
     state: present

@@ -32,8 +32,19 @@ adguardhome_service_name: "adguardhome"
 adguardhome_service_enable: True
 adguardhome_service_start: True
 
+# Linux capabilities required when running AdGuard Home as non-root.
+adguardhome_non_root_capabilities:
+  - cap_net_bind_service+eip
+adguardhome_non_root_dhcp_capabilities:
+  - cap_net_raw+eip
+
 # Disable DNSStubResolver if systemd-resolved servicee is running.
 adguardhome_disable_systemd_dnsstubresolver: True
+
+# Stop and disable DNS services that conflict with AdGuard binding to :53.
+adguardhome_disable_conflicting_dns_services: true
+adguardhome_conflicting_dns_services:
+  - dnsmasq
 
 # TLS Cert. Cloudflare Docker repo
 adguardhome_certbot_cf_repo: "certbot/dns-cloudflare:v2.8.0"

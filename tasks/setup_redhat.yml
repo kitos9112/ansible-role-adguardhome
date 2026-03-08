@@ -1,5 +1,7 @@
 ---
 - name: Install system dependencies
   ansible.builtin.package:
-    name: libcap
+    name:
+      - libcap
+      - cronie
     state: present
