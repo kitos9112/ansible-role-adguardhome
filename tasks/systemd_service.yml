@@ -3,30 +3,32 @@
   ansible.builtin.template:
     src: adguardhome.service.j2
     dest: "/etc/systemd/system/{{ adguardhome_service_name }}.service"
-    mode: "0664"
+    mode: "0644"
   register: adguardhome_systemd_unit
   notify:
-    - reload systemd daemon
-    - restart adguardhome
+    - Reload systemd daemon
+    - Restart AdGuard Home
 
 - name: Apply configuration settings
-  register: settings
+  register: adguardhome_settings
   ansible.builtin.template:
     src: adguardhome.yml.j2
     dest: "{{ adguardhome_config_file }}"
-    mode: 0644
+    mode: "0600"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_user }}"
   notify:
-    - stop adguardhome
-    - apply adguardhome configuration
+    - Stop AdGuard Home
+    - Apply AdGuard Home configuration
   tags:
     - molecule-idempotence-notest
+  no_log: true
+  diff: false
 
 - name: Make sure handlers are run
   ansible.builtin.meta: flush_handlers
 
-- name: start and enable adguardhome service
+- name: Start and enable AdGuard Home service
   ansible.builtin.service:
     name: "{{ adguardhome_service_name }}"
     state: started

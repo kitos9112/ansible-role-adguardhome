@@ -1,34 +1,41 @@
 ---
-- name: reload systemd daemon
+- name: Reload systemd daemon
+  listen: reload systemd daemon
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: restart adguardhome
+- name: Restart AdGuard Home
+  listen: restart adguardhome
   ansible.builtin.service:
     name: "{{ adguardhome_service_name }}"
     state: restarted
   when: adguardhome_service_start
 
-- name: stop adguardhome
+- name: Stop AdGuard Home
+  listen: stop adguardhome
   ansible.builtin.service:
     name: "{{ adguardhome_service_name }}"
     state: stopped
   when:
-    - settings.changed |bool
+    - adguardhome_settings.changed |bool
   tags:
     - molecule-idempotence-notest
 
-- name: apply adguardhome configuration
+- name: Apply AdGuard Home configuration
+  listen: apply adguardhome configuration
   ansible.builtin.template:
     src: adguardhome.yml.j2
     dest: "{{ adguardhome_config_file }}"
-    mode: 0644
+    mode: "0600"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_user }}"
+  no_log: true
+  diff: false
   tags:
     - molecule-idempotence-notest
 
-- name: restart systemd-resolved
+- name: Restart systemd-resolved
+  listen: restart systemd-resolved
   ansible.builtin.service:
     name: systemd-resolved
     state: restarted
