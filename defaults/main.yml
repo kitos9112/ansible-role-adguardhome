@@ -3,6 +3,9 @@
 # lookup the latest release via GitHub API.
 adguardhome_version: "latest"
 
+# Inspect an already-running installation without managing any of its state.
+adguardhome_adopt_existing: false
+
 # When desired version is "latest", use GITHUB_TOKEN environment variable when
 # looking up the latest release via GitHub's API. If you get rate limit errors
 # from GitHub's API, turn this on and set the GITHUB_TOKEN environment variable
@@ -29,6 +32,7 @@ adguardhome_tmp_dir: /tmp
 
 # Enable and start systemd service unit?
 adguardhome_service_name: "adguardhome"
+adguardhome_service_unit_file: "/etc/systemd/system/{{ adguardhome_service_name }}.service"
 adguardhome_service_enable: True
 adguardhome_service_start: True
 

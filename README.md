@@ -91,6 +91,22 @@ Home, the best approach is:
 
 Personally I run AdGuard Home under a user called `adguard`.
 
+### Read-only adoption of an existing installation
+
+Set `adguardhome_adopt_existing: true` to validate an already-installed,
+already-active service without applying the role's normal install or
+configuration tasks. This mode requires an explicit pinned
+`adguardhome_version` in `major.minor.patch` form, plus an existing executable,
+configuration file, systemd unit, and active service. It checks the installed
+binary version and validates the existing configuration with AdGuard Home's
+`--check-config` option. It does not modify configuration, unit, binary,
+service state, capabilities, DNS integration, or runtime data such as DHCP
+leases. The default is `false`.
+
+This mode is only a read-only adoption check. It does not implement desired
+configuration management, create backups, or provide recovery. Review and
+validate those separately before enabling normal configuration tasks.
+
 ## License
 
 This project is licensed under the MIT License.

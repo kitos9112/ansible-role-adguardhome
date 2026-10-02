@@ -1,0 +1,106 @@
+---
+- name: Require an explicitly pinned AdGuard Home version
+  ansible.builtin.assert:
+    that:
+      - adguardhome_version is defined
+      - (adguardhome_version | default('latest')) is match('^[0-9]+[.][0-9]+[.][0-9]+$')
+    fail_msg: >-
+      Read-only adoption requires an explicit pinned version in major.minor.patch
+      form; set adguardhome_version and do not use latest.
+
+- name: Inspect existing AdGuard Home binary
+  ansible.builtin.stat:
+    path: "{{ adguardhome_bin_file }}"
+  register: adguardhome_adoption_binary
+
+- name: Inspect existing AdGuard Home configuration
+  ansible.builtin.stat:
+    path: "{{ adguardhome_config_file }}"
+  register: adguardhome_adoption_config
+
+- name: Inspect existing AdGuard Home systemd unit
+  ansible.builtin.stat:
+    path: "{{ adguardhome_service_unit_file }}"
+  register: adguardhome_adoption_unit
+
+- name: Require the existing binary, configuration, and systemd unit
+  ansible.builtin.assert:
+    that:
+      - adguardhome_adoption_binary.stat.exists | default(false)
+      - adguardhome_adoption_binary.stat.isreg | default(false)
+      - adguardhome_adoption_binary.stat.executable | default(false)
+      - adguardhome_adoption_config.stat.exists | default(false)
+      - adguardhome_adoption_config.stat.isreg | default(false)
+      - adguardhome_adoption_unit.stat.exists | default(false)
+      - adguardhome_adoption_unit.stat.isreg | default(false)
+    fail_msg: >-
+      Read-only adoption requires an existing executable binary, configuration
+      file, and systemd unit.
+
+- name: Check that the existing AdGuard Home service is already active
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - is-active
+      - --quiet
+      - "{{ adguardhome_service_name }}.service"
+  register: adguardhome_adoption_service
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  no_log: true
+  diff: false
+
+- name: Require the existing AdGuard Home service to remain active
+  ansible.builtin.assert:
+    that:
+      - adguardhome_adoption_service.rc == 0
+    fail_msg: >-
+      Read-only adoption requires the existing AdGuard service to already be
+      active. Adoption will not start or recover it.
+
+- name: Read the installed AdGuard Home version
+  ansible.builtin.command:
+    argv:
+      - "{{ adguardhome_bin_file }}"
+      - --version
+  register: adguardhome_adoption_version
+  changed_when: false
+  check_mode: false
+  no_log: true
+  diff: false
+
+- name: Require the installed AdGuard Home version to match the pin
+  ansible.builtin.assert:
+    that:
+      - >-
+        adguardhome_adoption_version.stdout is search(
+          '(^|[^0-9.])v?' ~ (adguardhome_version | regex_escape) ~ '([^0-9.]|$)'
+        )
+    fail_msg: >-
+      The existing AdGuard binary does not match adguardhome_version.
+      Read-only adoption will not replace it.
+
+- name: Validate the existing AdGuard Home configuration without applying it
+  ansible.builtin.command:
+    argv:
+      - "{{ adguardhome_bin_file }}"
+      - --config
+      - "{{ adguardhome_config_file }}"
+      - --work-dir
+      - "{{ adguardhome_data_dir }}"
+      - --check-config
+  register: adguardhome_adoption_config_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  no_log: true
+  diff: false
+
+- name: Require the existing AdGuard Home configuration to validate
+  ansible.builtin.assert:
+    that:
+      - adguardhome_adoption_config_check.rc == 0
+    fail_msg: >-
+      The existing configuration failed validation. Read-only adoption made no
+      changes and did not restart or recover AdGuard Home.
