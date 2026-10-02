@@ -20,7 +20,7 @@
   ansible.builtin.template:
     src: resolvconf.conf.j2
     dest: /etc/resolvconf.conf
-    mode: 06400
+    mode: "0644"
 
 - name: Check version of installed binary
   ansible.builtin.shell: >-
@@ -47,8 +47,8 @@
     system: "{{ adguardhome_system_user }}"
     state: present
 
-- name: "Install binary (v{{ adguardhome_version }} / {{ adguardhome_arch }})"
-  include_tasks: install.yml
+- name: Install AdGuard Home binary archive
+  ansible.builtin.include_tasks: install.yml
   when: >-
     adguardhome_version_check.changed
     or (not adguardhome_binary_check.stat.exists)

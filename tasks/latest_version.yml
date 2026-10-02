@@ -9,6 +9,8 @@
     repo: Adguardhome
     token: "{% if adguardhome_use_github_token %}{{ lookup('env', 'GITHUB_TOKEN') }}{% endif %}"
   register: adguardhome_latest_release
+  no_log: true
+  diff: false
 
 - name: Set desired version to version of latest release
   ansible.builtin.set_fact:

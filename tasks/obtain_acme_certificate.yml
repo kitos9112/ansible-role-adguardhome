@@ -1,9 +1,9 @@
 ---
-- name: "Ensure {{ adguardhome_certbot_dir }} directory exists"
+- name: Ensure ACME certificate directory exists
   ansible.builtin.file:
     path: "{{ adguardhome_certbot_dir }}/etc"
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Ensure Cloudflare credentials for certbot are configured
   ansible.builtin.assert:
@@ -18,22 +18,28 @@
       Configure Cloudflare credentials for ACME.
       Use `adguardhome_cf_api_token`, or both
       `adguardhome_cf_email_address` and `adguardhome_cf_api_key`.
+  no_log: true
+  diff: false
 
 - name: Copy Cloudflare config into etc folder
   ansible.builtin.template:
     src: cf.ini.j2
     dest: "{{ adguardhome_certbot_dir }}/etc/cf.ini"
-    mode: 0700
+    mode: "0700"
     owner: root
     group: root
+  no_log: true
+  diff: false
 
 - name: Create `docker-cert-adguard.sh` SH script for obtaining and installing certs
   ansible.builtin.template:
     src: docker-cert.sh.j2
     dest: "{{ adguardhome_certbot_dir }}/docker-cert-adguard.sh"
-    mode: 0700
+    mode: "0700"
     owner: root
     group: root
+  no_log: true
+  diff: false
 
 - name: Execute previously-copied SH script
   ansible.builtin.command:
@@ -41,6 +47,8 @@
     cmd: ./docker-cert-adguard.sh certonly
   register: adguardhome_cert_check
   check_mode: false
+  no_log: true
+  diff: false
   changed_when: >-
     ((adguardhome_cert_check.stdout | default('')) ~
     (adguardhome_cert_check.stderr | default('')))

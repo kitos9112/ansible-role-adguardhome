@@ -16,7 +16,7 @@
     path: "{{ adguardhome_data_dir }}"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_group }}"
-    mode: 0755
+    mode: "0755"
     recurse: true
     state: directory
   when: >-
@@ -29,7 +29,7 @@
     path: "{{ adguardhome_config_dir }}"
     owner: "{{ adguardhome_user }}"
     group: "{{ adguardhome_group }}"
-    mode: 0755
+    mode: "0755"
     recurse: false
     state: directory
 

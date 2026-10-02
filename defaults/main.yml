@@ -29,7 +29,7 @@ adguardhome_group: "{{ adguardhome_user }}"
 # When setting adguardhome_user to something other than "root", this determines
 # if the user will be created as a system user or not. Rule of thumb is if the
 # user is logged in to by humans, it probably is not a system user.
-adguardhome_system_user: True
+adguardhome_system_user: true
 
 # Default paths.
 adguardhome_bin_dir: "/opt/{{ adguardhome_service_name }}/bin"
@@ -41,8 +41,8 @@ adguardhome_tmp_dir: /tmp
 # Enable and start systemd service unit?
 adguardhome_service_name: "adguardhome"
 adguardhome_service_unit_file: "/etc/systemd/system/{{ adguardhome_service_name }}.service"
-adguardhome_service_enable: True
-adguardhome_service_start: True
+adguardhome_service_enable: true
+adguardhome_service_start: true
 
 # Linux capabilities required when running AdGuard Home as non-root.
 adguardhome_non_root_capabilities:
@@ -51,7 +51,7 @@ adguardhome_non_root_dhcp_capabilities:
   - cap_net_raw+eip
 
 # Disable DNSStubResolver if systemd-resolved servicee is running.
-adguardhome_disable_systemd_dnsstubresolver: True
+adguardhome_disable_systemd_dnsstubresolver: true
 
 # Stop and disable DNS services that conflict with AdGuard binding to :53.
 adguardhome_disable_conflicting_dns_services: true
@@ -123,7 +123,7 @@ adguardhome_dhcpv4_lease_duration: 86400
 adguardhome_dhcpv4_icmp_timeout_msec: 1000
 adguardhome_dhcpv4_options: []
 
-adguardhome_acme_cloudflare_certificate_enabled: True
+adguardhome_acme_cloudflare_certificate_enabled: true
 adguardhome_tls_hostname: test.uk.msrpi.com
 adguardhome_tls_cert_pem: "{{ adguardhome_config_dir }}/fullchain.pem"
 adguardhome_tls_key_pem: "{{ adguardhome_config_dir }}/privkey.pem"

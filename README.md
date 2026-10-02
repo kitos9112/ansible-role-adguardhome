@@ -133,6 +133,11 @@ and compensation branches. It does not manage the binary, unit, account,
 capabilities, DNS integration, or runtime data such as DHCP leases. The default
 is disabled.
 
+The legacy installation path writes the credential-bearing AdGuard YAML with
+mode `0600` and suppresses task output and diffs. It also writes the
+credential-free `resolvconf.conf` with mode `0644`; this corrects the previous
+`06400` mode, which set setuid/setgid bits on that regular configuration file.
+
 ## License
 
 This project is licensed under the MIT License.

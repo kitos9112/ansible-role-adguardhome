@@ -437,6 +437,42 @@ def test_symlinked_live_config_is_rejected_before_validation(tmp_path):
     assert CANARY not in output
 
 
+def test_legacy_secret_configuration_writes_are_private_and_suppressed():
+    service_tasks = yaml.safe_load(
+        (SOURCE / "tasks/systemd_service.yml").read_text()
+    )
+    config_task = next(
+        task for task in service_tasks
+        if task["name"] == "Apply configuration settings"
+    )
+    config_handler = next(
+        task
+        for task in yaml.safe_load(
+            (SOURCE / "handlers/main.yml").read_text()
+        )
+        if task["name"] == "Apply AdGuard Home configuration"
+    )
+    for task in (config_task, config_handler):
+        assert task["ansible.builtin.template"]["src"] == "adguardhome.yml.j2"
+        assert task["ansible.builtin.template"]["mode"] == "0600"
+        assert task["no_log"] is True
+        assert task["diff"] is False
+
+
+def test_legacy_handler_notification_names_remain_supported():
+    handlers = yaml.safe_load((SOURCE / "handlers/main.yml").read_text())
+    expected_aliases = {
+        "Reload systemd daemon": "reload systemd daemon",
+        "Restart AdGuard Home": "restart adguardhome",
+        "Stop AdGuard Home": "stop adguardhome",
+        "Apply AdGuard Home configuration": "apply adguardhome configuration",
+        "Restart systemd-resolved": "restart systemd-resolved",
+    }
+    for handler in handlers:
+        assert handler["listen"] == expected_aliases[handler["name"]]
+    assert {handler["name"] for handler in handlers} == set(expected_aliases)
+
+
 def _run_managed_fixture(tmp_path, **fixture_args):
     (
         command, env, systemctl_log, check_log, protected_paths, config,
