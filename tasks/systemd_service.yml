@@ -10,7 +10,7 @@
     - Restart AdGuard Home
 
 - name: Apply configuration settings
-  register: settings
+  register: adguardhome_settings
   ansible.builtin.template:
     src: adguardhome.yml.j2
     dest: "{{ adguardhome_config_file }}"
