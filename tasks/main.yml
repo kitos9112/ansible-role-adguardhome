@@ -1,9 +1,18 @@
 ---
+- name: Manage configuration of an existing AdGuard Home installation
+  ansible.builtin.import_tasks: manage_existing.yml
+  when: adguardhome_manage_existing | bool
+  tags: always
+
 - name: Adopt existing AdGuard Home without changing installed state
   ansible.builtin.import_tasks: adopt_existing.yml
-  when: adguardhome_adopt_existing | bool
+  when:
+    - adguardhome_adopt_existing | bool
+    - not (adguardhome_manage_existing | bool)
   tags: always
 
 - name: Manage AdGuard Home installation
   ansible.builtin.import_tasks: manage.yml
-  when: not (adguardhome_adopt_existing | bool)
+  when:
+    - not (adguardhome_adopt_existing | bool)
+    - not (adguardhome_manage_existing | bool)

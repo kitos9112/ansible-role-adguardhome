@@ -1,0 +1,360 @@
+---
+- name: Reuse the pinned binary, service, and installation safety checks
+  ansible.builtin.include_tasks: adopt_existing.yml
+
+- name: Require an opaque desired AdGuard Home configuration
+  ansible.builtin.assert:
+    that:
+      - adguardhome_desired_config is string
+      - adguardhome_desired_config | length > 0
+      - adguardhome_manage_dns_health_port | int >= 1
+      - adguardhome_manage_dns_health_port | int <= 65535
+      - adguardhome_manage_dns_health_timeout | float > 0
+      - adguardhome_manage_dns_health_timeout | float <= 15
+    fail_msg: Existing configuration management requires desired YAML.
+  no_log: true
+
+- name: Safely converge configuration on the existing installation
+  block:
+    - name: Create a private transaction directory
+      ansible.builtin.tempfile:
+        path: "{{ adguardhome_tmp_dir }}"
+        state: directory
+        prefix: adguardhome-manage-
+      register: adguardhome_manage_tmpdir
+      changed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Enforce private transaction directory permissions
+      ansible.builtin.file:
+        path: "{{ adguardhome_manage_tmpdir.path }}"
+        state: directory
+        mode: "0700"
+      changed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Read the original configuration for semantic comparison and restore
+      ansible.builtin.slurp:
+        src: "{{ adguardhome_config_file }}"
+      register: adguardhome_manage_original
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Stage the opaque desired configuration as a private candidate
+      ansible.builtin.copy:
+        content: "{{ adguardhome_desired_config }}"
+        dest: "{{ adguardhome_manage_tmpdir.path }}/candidate.yml"
+        mode: "0600"
+      changed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Validate and migrate only the desired candidate
+      ansible.builtin.command:
+        argv:
+          - "{{ adguardhome_bin_file }}"
+          - --config
+          - "{{ adguardhome_manage_tmpdir.path }}/candidate.yml"
+          - --work-dir
+          - "{{ adguardhome_manage_tmpdir.path }}"
+          - --check-config
+        chdir: "{{ adguardhome_manage_tmpdir.path }}"
+      register: adguardhome_manage_candidate_check
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Require the isolated desired candidate to validate
+      ansible.builtin.assert:
+        that:
+          - adguardhome_manage_candidate_check.rc == 0
+        fail_msg: Desired configuration failed validation; live state is unchanged.
+      no_log: true
+
+    - name: Read the validator-normalized candidate
+      ansible.builtin.slurp:
+        src: "{{ adguardhome_manage_tmpdir.path }}/candidate.yml"
+      register: adguardhome_manage_candidate
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Parse current and candidate YAML without displaying content
+      ansible.builtin.set_fact:
+        adguardhome_manage_current_data: >-
+          {{ adguardhome_manage_original.content | b64decode | from_yaml }}
+        adguardhome_manage_candidate_data: >-
+          {{ adguardhome_manage_candidate.content | b64decode | from_yaml }}
+        adguardhome_manage_filter_updates: []
+      no_log: true
+      diff: false
+
+    - name: Preserve running filter update timestamps by stable filter identity
+      ansible.builtin.set_fact:
+        adguardhome_manage_filter_updates: >-
+          {{ adguardhome_manage_filter_updates + [
+            item | combine({'last_updated': previous_filter.last_updated})
+            if previous_filter.last_updated is defined else item
+          ] }}
+      vars:
+        previous_filter: >-
+          {{
+            (
+              adguardhome_manage_current_data.filters | default([])
+              | selectattr('id', 'defined')
+              | selectattr('id', 'equalto', item.id)
+              | list | first | default({})
+            ) if item.id is defined else (
+              adguardhome_manage_current_data.filters | default([])
+              | selectattr('url', 'defined')
+              | selectattr('url', 'equalto', item.url | default(''))
+              | list | first | default({})
+            )
+          }}
+      loop: "{{ adguardhome_manage_candidate_data.filters | default([]) }}"
+      when: adguardhome_manage_candidate_data.filters is defined
+      no_log: true
+      diff: false
+
+    - name: Build the semantic desired configuration
+      ansible.builtin.set_fact:
+        adguardhome_manage_final_data: >-
+          {{
+            adguardhome_manage_candidate_data
+            | combine({'filters': adguardhome_manage_filter_updates})
+            if adguardhome_manage_candidate_data.filters is defined
+            else adguardhome_manage_candidate_data
+          }}
+        adguardhome_manage_config_drift: >-
+          {{
+            adguardhome_manage_current_data !=
+            (
+              adguardhome_manage_candidate_data
+              | combine({'filters': adguardhome_manage_filter_updates})
+              if adguardhome_manage_candidate_data.filters is defined
+              else adguardhome_manage_candidate_data
+            )
+          }}
+      no_log: true
+      diff: false
+
+    - name: Confirm live configuration is unchanged since it was snapshotted
+      ansible.builtin.slurp:
+        src: "{{ adguardhome_config_file }}"
+      register: adguardhome_manage_precommit
+      when:
+        - adguardhome_manage_config_drift | bool
+        - not ansible_check_mode
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Refuse a concurrent configuration change
+      ansible.builtin.assert:
+        that:
+          - adguardhome_manage_precommit.content == adguardhome_manage_original.content
+        fail_msg: Live configuration changed during management; no update was applied.
+      when:
+        - adguardhome_manage_config_drift | bool
+        - not ansible_check_mode
+      no_log: true
+
+    - name: Save an exact private rollback copy
+      ansible.builtin.copy:
+        content: "{{ adguardhome_manage_original.content | b64decode }}"
+        dest: "{{ adguardhome_manage_tmpdir.path }}/original.yml"
+        mode: "0600"
+      changed_when: false
+      when:
+        - adguardhome_manage_config_drift | bool
+        - not ansible_check_mode
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Stage the final timestamp-preserving candidate
+      ansible.builtin.copy:
+        content: >-
+          {{ adguardhome_manage_final_data | to_nice_yaml(indent=2, sort_keys=false) }}
+        dest: "{{ adguardhome_manage_tmpdir.path }}/final.yml"
+        mode: "0600"
+      changed_when: false
+      when:
+        - adguardhome_manage_config_drift | bool
+        - not ansible_check_mode
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Validate the exact serialized candidate before installation
+      ansible.builtin.command:
+        argv:
+          - "{{ adguardhome_bin_file }}"
+          - --config
+          - "{{ adguardhome_manage_tmpdir.path }}/final.yml"
+          - --work-dir
+          - "{{ adguardhome_manage_tmpdir.path }}"
+          - --check-config
+        chdir: "{{ adguardhome_manage_tmpdir.path }}"
+      register: adguardhome_manage_final_check
+      changed_when: false
+      failed_when: false
+      when:
+        - adguardhome_manage_config_drift | bool
+        - not ansible_check_mode
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Require the final serialized candidate to validate
+      ansible.builtin.assert:
+        that:
+          - adguardhome_manage_final_check.rc == 0
+        fail_msg: Final desired configuration failed validation; live state is unchanged.
+      when:
+        - adguardhome_manage_config_drift | bool
+        - not ansible_check_mode
+      no_log: true
+
+    - name: Atomically install validated desired configuration
+      ansible.builtin.copy:
+        src: "{{ adguardhome_manage_tmpdir.path }}/final.yml"
+        dest: "{{ adguardhome_config_file }}"
+        remote_src: true
+        owner: "{{ adguardhome_adoption_config.stat.uid }}"
+        group: "{{ adguardhome_adoption_config.stat.gid }}"
+        mode: "{{ adguardhome_adoption_config.stat.mode }}"
+      when:
+        - adguardhome_manage_config_drift | bool
+        - not ansible_check_mode
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Activate the managed configuration and verify service health
+      when:
+        - adguardhome_manage_config_drift | bool
+        - not ansible_check_mode
+      block:
+        - name: Restart the existing AdGuard Home service once
+          ansible.builtin.command:
+            argv:
+              - systemctl
+              - restart
+              - "{{ adguardhome_service_name }}.service"
+          changed_when: true
+          check_mode: false
+          no_log: true
+          diff: false
+
+        - name: Check that the restarted service is active
+          ansible.builtin.command:
+            argv:
+              - systemctl
+              - is-active
+              - --quiet
+              - "{{ adguardhome_service_name }}.service"
+          register: adguardhome_manage_health
+          changed_when: false
+          failed_when: false
+          check_mode: false
+          no_log: true
+          diff: false
+
+        - name: Require the restarted service to be healthy
+          ansible.builtin.assert:
+            that:
+              - adguardhome_manage_health.rc == 0
+            fail_msg: Managed configuration failed service health validation.
+          no_log: true
+
+        - name: Verify DNS health after activation
+          ansible.builtin.include_tasks: verify_dns.yml
+          vars:
+            adguardhome_manage_dns_failure_message: >-
+              Managed configuration failed DNS health validation.
+
+      rescue:
+        - name: Restore original configuration bytes atomically
+          ansible.builtin.copy:
+            src: "{{ adguardhome_manage_tmpdir.path }}/original.yml"
+            dest: "{{ adguardhome_config_file }}"
+            remote_src: true
+            owner: "{{ adguardhome_adoption_config.stat.uid }}"
+            group: "{{ adguardhome_adoption_config.stat.gid }}"
+            mode: "{{ adguardhome_adoption_config.stat.mode }}"
+          check_mode: false
+          no_log: true
+          diff: false
+
+        - name: Restart the restored service once
+          ansible.builtin.command:
+            argv:
+              - systemctl
+              - restart
+              - "{{ adguardhome_service_name }}.service"
+          register: adguardhome_manage_rollback_restart
+          changed_when: true
+          failed_when: false
+          check_mode: false
+          no_log: true
+          diff: false
+
+        - name: Require the restored service restart to succeed
+          ansible.builtin.assert:
+            that:
+              - adguardhome_manage_rollback_restart.rc == 0
+            fail_msg: Configuration activation and recovery failed.
+          no_log: true
+
+        - name: Verify restored service is active
+          ansible.builtin.command:
+            argv:
+              - systemctl
+              - is-active
+              - --quiet
+              - "{{ adguardhome_service_name }}.service"
+          register: adguardhome_manage_rollback_active
+          changed_when: false
+          failed_when: false
+          check_mode: false
+          no_log: true
+          diff: false
+
+        - name: Require restored service to be active
+          ansible.builtin.assert:
+            that:
+              - adguardhome_manage_rollback_active.rc == 0
+            fail_msg: Configuration activation and recovery failed.
+          no_log: true
+
+        - name: Verify DNS health after rollback
+          ansible.builtin.include_tasks: verify_dns.yml
+          vars:
+            adguardhome_manage_dns_failure_message: >-
+              Configuration activation and recovery failed.
+
+        - name: Report the safely restored configuration
+          ansible.builtin.fail:
+            msg: Desired configuration failed health validation; original configuration was restored.
+
+  always:
+    - name: Remove private configuration transaction artifacts
+      ansible.builtin.file:
+        path: "{{ adguardhome_manage_tmpdir.path | default('/nonexistent') }}"
+        state: absent
+      when: >-
+        adguardhome_manage_tmpdir is defined and
+        adguardhome_manage_tmpdir.path is defined
+      changed_when: false
+      check_mode: false
+      no_log: true
+      diff: false

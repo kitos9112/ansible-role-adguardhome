@@ -6,6 +6,14 @@ adguardhome_version: "latest"
 # Inspect an already-running installation without managing any of its state.
 adguardhome_adopt_existing: false
 
+# Safely manage only the configuration of an existing pinned installation.
+adguardhome_manage_existing: false
+adguardhome_desired_config: ""
+adguardhome_manage_dns_health_address: 127.0.0.1
+adguardhome_manage_dns_health_port: 53
+adguardhome_manage_dns_health_name: example.com
+adguardhome_manage_dns_health_timeout: 15
+
 # When desired version is "latest", use GITHUB_TOKEN environment variable when
 # looking up the latest release via GitHub's API. If you get rate limit errors
 # from GitHub's API, turn this on and set the GITHUB_TOKEN environment variable

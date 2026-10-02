@@ -110,6 +110,29 @@ This mode is only a read-only adoption check. It does not implement desired
 configuration management, create backups, or provide recovery. Review and
 validate those separately before enabling normal configuration tasks.
 
+### Managing configuration on an existing installation
+
+Set `adguardhome_manage_existing: true` and provide the complete desired YAML
+as `adguardhome_desired_config` from a protected variable source. This mode
+requires the same pinned, existing, active installation as read-only adoption.
+It changes only the AdGuard Home configuration file: it validates private
+staging copies, compares YAML semantically while retaining runtime filter
+`last_updated` values, and does not restart or rewrite the live file when the
+desired configuration is already equivalent. A changed configuration is
+installed atomically with the existing file's owner, group, and mode, then the
+service is restarted once and checked for active state and a successful DNS A
+answer through the configured local listener. The DNS check defaults to
+`127.0.0.1:53` for `example.com` and has a bounded timeout.
+
+If activation or health validation fails, the role restores the exact prior
+configuration bytes and attempts one compensating restart, then checks service
+and DNS health. The temporary rollback copy is private and removed at task
+completion. This is a bounded configuration rollback mechanism, not a claim
+that host recovery has been tested; synthetic tests exercise the transaction
+and compensation branches. It does not manage the binary, unit, account,
+capabilities, DNS integration, or runtime data such as DHCP leases. The default
+is disabled.
+
 ## License
 
 This project is licensed under the MIT License.
