@@ -16,6 +16,7 @@
 - name: Inspect existing AdGuard Home configuration
   ansible.builtin.stat:
     path: "{{ adguardhome_config_file }}"
+    follow: false
   register: adguardhome_adoption_config
 
 - name: Inspect existing AdGuard Home systemd unit
@@ -31,6 +32,7 @@
       - adguardhome_adoption_binary.stat.executable | default(false)
       - adguardhome_adoption_config.stat.exists | default(false)
       - adguardhome_adoption_config.stat.isreg | default(false)
+      - not (adguardhome_adoption_config.stat.islnk | default(false))
       - adguardhome_adoption_unit.stat.exists | default(false)
       - adguardhome_adoption_unit.stat.isreg | default(false)
     fail_msg: >-
@@ -81,21 +83,68 @@
       The existing AdGuard binary does not match adguardhome_version.
       Read-only adoption will not replace it.
 
-- name: Validate the existing AdGuard Home configuration without applying it
-  ansible.builtin.command:
-    argv:
-      - "{{ adguardhome_bin_file }}"
-      - --config
-      - "{{ adguardhome_config_file }}"
-      - --work-dir
-      - "{{ adguardhome_data_dir }}"
-      - --check-config
-  register: adguardhome_adoption_config_check
-  changed_when: false
-  failed_when: false
-  check_mode: false
-  no_log: true
-  diff: false
+- name: Validate a protected copy of the existing configuration
+  block:
+    - name: Create a private temporary directory for validation
+      ansible.builtin.tempfile:
+        path: "{{ adguardhome_tmp_dir }}"
+        state: directory
+        prefix: adguardhome-adoption-
+      register: adguardhome_adoption_tmpdir
+      changed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Enforce private permissions on the validation directory
+      ansible.builtin.file:
+        path: "{{ adguardhome_adoption_tmpdir.path }}"
+        state: directory
+        mode: "0700"
+      changed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Copy the existing configuration to a private candidate
+      ansible.builtin.copy:
+        src: "{{ adguardhome_config_file }}"
+        dest: "{{ adguardhome_adoption_tmpdir.path }}/AdGuardHome.yml"
+        remote_src: true
+        mode: "0600"
+        follow: false
+      changed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
+
+    - name: Check only the isolated candidate configuration
+      ansible.builtin.command:
+        argv:
+          - "{{ adguardhome_bin_file }}"
+          - --config
+          - "{{ adguardhome_adoption_tmpdir.path }}/AdGuardHome.yml"
+          - --work-dir
+          - "{{ adguardhome_adoption_tmpdir.path }}"
+          - --check-config
+        chdir: "{{ adguardhome_adoption_tmpdir.path }}"
+      register: adguardhome_adoption_config_check
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
+
+  always:
+    - name: Remove the temporary validation directory
+      ansible.builtin.file:
+        path: "{{ adguardhome_adoption_tmpdir.path | default('/nonexistent') }}"
+        state: absent
+      when: adguardhome_adoption_tmpdir.path is defined
+      changed_when: false
+      check_mode: false
+      no_log: true
+      diff: false
 
 - name: Require the existing AdGuard Home configuration to validate
   ansible.builtin.assert:

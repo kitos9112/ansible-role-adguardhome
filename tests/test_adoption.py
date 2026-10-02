@@ -35,6 +35,7 @@ def _fixture(
     config_text="dhcp:\n  port: 67\n",
     active=True,
     missing=None,
+    config_symlink=False,
 ):
     roles = tmp_path / "roles"
     roles.mkdir()
@@ -61,18 +62,31 @@ def _fixture(
         "  exit 0\n"
         "fi\n"
         "config=\"\"\n"
+        "work_dir=\"\"\n"
         "while [ $# -gt 0 ]; do\n"
         "  if [ \"$1\" = \"-c\" ] || [ \"$1\" = \"--config\" ]; then "
         "shift; config=\"$1\"; fi\n"
+        "  if [ \"$1\" = \"--work-dir\" ]; then "
+        "shift; work_dir=\"$1\"; fi\n"
         "  shift\n"
         "done\n"
+        "printf '%s\\n%s\\n%s\\n%s\\n%s\\n' \"$config\" "
+        "\"$work_dir\" \"$PWD\" \"$(ls -ld \"$config\" | cut -c1-10)\" "
+        "\"$(ls -ld \"$work_dir\" | cut -c1-10)\" "
+        ">> \"$ADGUARD_TEST_CHECK_LOG\"\n"
         "cat \"$config\" >/dev/null\n"
+        "printf '%s\\n' 'MUTATED_CANDIDATE_ONLY' >> \"$config\"\n"
         f"printf '%s\\n' '{CANARY}'\n"
         "grep -q invalid \"$config\" && exit 2\n"
         "exit 0\n"
     )
     binary.chmod(0o750)
     config.write_text(config_text)
+    config_target = config
+    if config_symlink:
+        config_target = config_dir / "AdGuardHome.source.yml"
+        config.rename(config_target)
+        config.symlink_to(config_target.name)
     unit.write_text("[Unit]\nDescription=Synthetic AdGuard\n")
     lease_db.write_text("synthetic DHCP lease state\n")
     runtime_state.write_text("synthetic runtime state\n")
@@ -86,6 +100,7 @@ def _fixture(
     fakebin = tmp_path / "fakebin"
     fakebin.mkdir()
     systemctl_log = tmp_path / "systemctl.log"
+    check_log = tmp_path / "check-config.log"
     systemctl = fakebin / "systemctl"
     systemctl.write_text(
         "#!/bin/sh\n"
@@ -149,6 +164,7 @@ def _fixture(
         "ANSIBLE_NOCOLOR": "1",
         "LANG": "C.UTF-8",
         "ADGUARD_TEST_SYSTEMCTL_LOG": str(systemctl_log),
+        "ADGUARD_TEST_CHECK_LOG": str(check_log),
         "ADGUARD_TEST_SERVICE_ACTIVE": "true" if active else "false",
     }
     command = [
@@ -160,12 +176,14 @@ def _fixture(
         "localhost,",
         str(playbook),
     ]
-    protected_paths = [binary, config, unit, lease_db, runtime_state]
-    return command, env, systemctl_log, protected_paths
+    protected_paths = [
+        binary, config_target, config, unit, lease_db, runtime_state
+    ]
+    return command, env, systemctl_log, check_log, protected_paths, config
 
 
 def _run(tmp_path, **fixture_args):
-    command, env, systemctl_log, protected_paths = _fixture(
+    command, env, systemctl_log, check_log, protected_paths, config = _fixture(
         tmp_path, **fixture_args
     )
     before = _snapshot(protected_paths)
@@ -178,13 +196,13 @@ def _run(tmp_path, **fixture_args):
         timeout=30,
     )
     after = _snapshot(protected_paths)
-    return result, before, after, systemctl_log
+    return result, before, after, systemctl_log, check_log, config
 
 
 def test_adoption_is_read_only_and_validates_existing_native_install(
     tmp_path,
 ):
-    result, before, after, systemctl_log = _run(tmp_path)
+    result, before, after, systemctl_log, check_log, config = _run(tmp_path)
     output = result.stdout + result.stderr
     assert result.returncode == 0, output
     assert "changed=0" in output, output
@@ -193,13 +211,22 @@ def test_adoption_is_read_only_and_validates_existing_native_install(
         "is-active --quiet adguardhome.service"
     ]
     assert CANARY not in output
+    checked_config, work_dir, command_cwd, candidate_mode, directory_mode = (
+        check_log.read_text().splitlines()
+    )
+    assert checked_config != str(config)
+    assert Path(checked_config).parent == Path(work_dir) == Path(command_cwd)
+    assert candidate_mode == "-rw-------"
+    assert directory_mode == "drwx------"
+    assert not Path(work_dir).exists()
 
 
 @pytest.mark.parametrize("version", [None, "latest", "development"])
 def test_unpinned_or_invalid_version_fails_without_touching_existing_state(
     tmp_path, version
 ):
-    result, before, after, systemctl_log = _run(tmp_path, version=version)
+    result, before, after, systemctl_log, _, _ = _run(
+        tmp_path, version=version)
     output = result.stdout + result.stderr
     assert result.returncode != 0, output
     assert "requires an explicit pinned version" in output
@@ -211,7 +238,7 @@ def test_unpinned_or_invalid_version_fails_without_touching_existing_state(
 def test_invalid_config_fails_without_restarting_or_touching_runtime_state(
     tmp_path,
 ):
-    result, before, after, systemctl_log = _run(
+    result, before, after, systemctl_log, check_log, config = _run(
         tmp_path, config_text=f"invalid: {CANARY}\n"
     )
     output = result.stdout + result.stderr
@@ -222,12 +249,20 @@ def test_invalid_config_fails_without_restarting_or_touching_runtime_state(
         "is-active --quiet adguardhome.service"
     ]
     assert CANARY not in output
+    checked_config, work_dir, command_cwd, candidate_mode, directory_mode = (
+        check_log.read_text().splitlines()
+    )
+    assert checked_config != str(config)
+    assert Path(checked_config).parent == Path(work_dir) == Path(command_cwd)
+    assert candidate_mode == "-rw-------"
+    assert directory_mode == "drwx------"
+    assert not Path(work_dir).exists()
 
 
 def test_mismatched_installed_version_fails_without_touching_existing_state(
     tmp_path,
 ):
-    result, before, after, systemctl_log = _run(
+    result, before, after, systemctl_log, _, _ = _run(
         tmp_path, binary_version="0.108.0"
     )
     output = result.stdout + result.stderr
@@ -246,7 +281,8 @@ def test_mismatched_installed_version_fails_without_touching_existing_state(
 def test_missing_existing_install_component_fails_without_modifications(
     tmp_path, missing
 ):
-    result, before, after, systemctl_log = _run(tmp_path, missing=missing)
+    result, before, after, systemctl_log, check_log, _ = _run(
+        tmp_path, missing=missing)
     output = result.stdout + result.stderr
     assert result.returncode != 0, output
     assert (
@@ -255,11 +291,13 @@ def test_missing_existing_install_component_fails_without_modifications(
     )
     assert before == after
     assert not systemctl_log.exists()
+    assert not check_log.exists()
     assert CANARY not in output
 
 
 def test_inactive_service_fails_without_restarting_or_recovering(tmp_path):
-    result, before, after, systemctl_log = _run(tmp_path, active=False)
+    result, before, after, systemctl_log, check_log, _ = _run(
+        tmp_path, active=False)
     output = result.stdout + result.stderr
     assert result.returncode != 0, output
     assert "existing AdGuard service to already be active" in output
@@ -267,4 +305,21 @@ def test_inactive_service_fails_without_restarting_or_recovering(tmp_path):
     assert systemctl_log.read_text().splitlines() == [
         "is-active --quiet adguardhome.service"
     ]
+    assert CANARY not in output
+    assert not check_log.exists()
+
+
+def test_symlinked_live_config_is_rejected_before_validation(tmp_path):
+    result, before, after, systemctl_log, check_log, config = _run(
+        tmp_path, config_symlink=True)
+    output = result.stdout + result.stderr
+    assert result.returncode != 0, output
+    message = (
+        "existing executable binary, configuration file, and systemd unit"
+    )
+    assert message in output
+    assert before == after
+    assert config.is_symlink()
+    assert not systemctl_log.exists()
+    assert not check_log.exists()
     assert CANARY not in output

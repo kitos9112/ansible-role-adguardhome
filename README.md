@@ -98,10 +98,13 @@ already-active service without applying the role's normal install or
 configuration tasks. This mode requires an explicit pinned
 `adguardhome_version` in `major.minor.patch` form, plus an existing executable,
 configuration file, systemd unit, and active service. It checks the installed
-binary version and validates the existing configuration with AdGuard Home's
-`--check-config` option. It does not modify configuration, unit, binary,
-service state, capabilities, DNS integration, or runtime data such as DHCP
-leases. The default is `false`.
+binary version and validates a private temporary copy of the configuration
+with AdGuard Home's `--check-config` option. The candidate and its working
+directory are isolated from the live config and data paths and removed after
+validation, including when validation fails. This protects the live file from
+schema migration performed by `--check-config`. Adoption does not modify the
+live configuration, unit, binary, service state, capabilities, DNS
+integration, or runtime data such as DHCP leases. The default is `false`.
 
 This mode is only a read-only adoption check. It does not implement desired
 configuration management, create backups, or provide recovery. Review and
